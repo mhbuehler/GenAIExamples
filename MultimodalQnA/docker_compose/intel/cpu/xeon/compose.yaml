@@ -76,6 +76,8 @@ services:
       no_proxy: ${no_proxy}
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
+    working_dir: /home/user/comps/lvms/llava/dependency
+    entrypoint: ["python", "llava_server.py", "--device", "cpu", "--model_name_or_path", $LVM_MODEL_ID]
     restart: unless-stopped
   lvm-llava-svc:
     image: ${REGISTRY:-opea}/lvm-llava-svc:${TAG:-latest}
@@ -90,7 +92,6 @@ services:
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
       LVM_ENDPOINT: ${LVM_ENDPOINT}
-    entrypoint: ["python", "dependency/llava_server.py", "--device", "cpu", "--model_name_or_path", $LVM_MODEL_ID]
     restart: unless-stopped
   multimodalqna:
     image: ${REGISTRY:-opea}/multimodalqna:${TAG:-latest}
