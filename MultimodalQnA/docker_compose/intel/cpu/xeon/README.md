@@ -84,6 +84,7 @@ export INDEX_NAME="mm-rag-redis"
 export LLAVA_SERVER_PORT=8399
 export LVM_ENDPOINT="http://${host_ip}:8399"
 export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
+export LVM_MODEL_ID="llava-hf/llava-v1.6-vicuna-13b-hf"
 export WHISPER_MODEL="base"
 export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
 export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
@@ -179,6 +180,7 @@ Then run the command `docker images`, you will have the following 8 Docker Image
 ### Required Models
 
 By default, the multimodal-embedding and LVM models are set to a default value as listed below:
+
 
 | Service              | Model                                       |
 | -------------------- | ------------------------------------------- |
