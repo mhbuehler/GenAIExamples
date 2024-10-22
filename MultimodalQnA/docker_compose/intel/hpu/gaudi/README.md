@@ -257,7 +257,7 @@ Also, you are able to get the list of all videos that you uploaded:
 ```bash
 curl -X POST \
     -H "Content-Type: application/json" \
-    ${DATAPREP_GET_VIDEO_ENDPOINT}
+    ${DATAPREP_GET_FILE_ENDPOINT}
 ```
 
 Then you will get the response python-style LIST like this. Notice the name of each uploaded video e.g., `videoname.mp4` will become `videoname_uuid.mp4` where `uuid` is a unique ID for each uploaded video. The same video that are uploaded twice will have different `uuid`.
@@ -274,7 +274,7 @@ To delete all uploaded videos along with data indexed with `$INDEX_NAME` in REDI
 ```bash
 curl -X POST \
     -H "Content-Type: application/json" \
-    ${DATAPREP_DELETE_VIDEO_ENDPOINT}
+    ${DATAPREP_DELETE_FILE_ENDPOINT}
 ```
 
 7. MegaService
