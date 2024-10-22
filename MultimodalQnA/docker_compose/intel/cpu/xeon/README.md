@@ -93,8 +93,8 @@ export MEGA_SERVICE_HOST_IP=${host_ip}
 export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:8888/v1/multimodalqna"
 export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${host_ip}:6007/v1/generate_transcripts"
 export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${host_ip}:6007/v1/generate_captions"
-export DATAPREP_GET_VIDEO_ENDPOINT="http://${host_ip}:6007/v1/dataprep/get_videos"
-export DATAPREP_DELETE_VIDEO_ENDPOINT="http://${host_ip}:6007/v1/dataprep/delete_videos"
+export DATAPREP_GET_FILE_ENDPOINT="http://${host_ip}:6007/v1/dataprep/get_files"
+export DATAPREP_DELETE_FILE_ENDPOINT="http://${host_ip}:6007/v1/dataprep/delete_files"
 ```
 
 Note: Please replace with `host_ip` with you external IP address, do not use localhost.
@@ -180,6 +180,7 @@ Then run the command `docker images`, you will have the following 8 Docker Image
 ### Required Models
 
 By default, the multimodal-embedding and LVM models are set to a default value as listed below:
+
 
 | Service              | Model                                       |
 | -------------------- | ------------------------------------------- |
