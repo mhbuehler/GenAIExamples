@@ -252,7 +252,7 @@ curl --silent --write-out "HTTPSTATUS:%{http_code}" \
     -X POST -F "files=@./${video_fn}"
 ```
 
-Also, you are able to get the list of all videos that you uploaded:
+Also, you are able to get the list of all files that you uploaded:
 
 ```bash
 curl -X POST \
@@ -269,7 +269,7 @@ Then you will get the response python-style LIST like this. Notice the name of e
 ]
 ```
 
-To delete all uploaded videos along with data indexed with `$INDEX_NAME` in REDIS.
+To delete all uploaded files along with data indexed with `$INDEX_NAME` in REDIS.
 
 ```bash
 curl -X POST \
