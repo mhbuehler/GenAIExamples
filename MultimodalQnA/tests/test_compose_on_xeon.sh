@@ -14,6 +14,7 @@ WORKPATH=$(dirname "$PWD")
 LOG_PATH="$WORKPATH/tests"
 ip_address=$(hostname -I | awk '{print $1}')
 
+export image_fn="apple.png"
 export video_fn="WeAreGoingOnBullrun.mp4"
 
 function build_docker_images() {
@@ -37,6 +38,7 @@ function setup_env() {
     export INDEX_NAME="mm-rag-redis"
     export LLAVA_SERVER_PORT=8399
     export LVM_ENDPOINT="http://${host_ip}:8399"
+    export LVM_MODEL_ID="llava-hf/llava-v1.6-vicuna-13b-hf"
     export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
     export WHISPER_MODEL="base"
     export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
@@ -46,8 +48,8 @@ function setup_env() {
     export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:8888/v1/multimodalqna"
     export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${host_ip}:6007/v1/generate_transcripts"
     export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${host_ip}:6007/v1/generate_captions"
-    export DATAPREP_GET_VIDEO_ENDPOINT="http://${host_ip}:6007/v1/dataprep/get_videos"
-    export DATAPREP_DELETE_VIDEO_ENDPOINT="http://${host_ip}:6007/v1/dataprep/delete_videos"
+    export DATAPREP_GET_FILE_ENDPOINT="http://${host_ip}:6007/v1/dataprep/get_files"
+    export DATAPREP_DELETE_FILE_ENDPOINT="http://${host_ip}:6007/v1/dataprep/delete_files"
 }
 
 function start_services() {
@@ -61,9 +63,9 @@ function start_services() {
 
 function prepare_data() {
     cd $LOG_PATH
-    echo "Downloading video"
+    echo "Downloading image and video"
+    wget https://github.com/docarray/docarray/blob/main/tests/toydata/image-data/apple.png?raw=true -O ${image_fn}
     wget http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4 -O ${video_fn}
-
     sleep 1m
 
 }
@@ -74,9 +76,12 @@ function validate_service() {
     local DOCKER_NAME="$4"
     local INPUT_DATA="$5"
 
-    if [[ $SERVICE_NAME == *"dataprep-multimodal-redis"* ]]; then
+    if [[ $SERVICE_NAME == *"dataprep-multimodal-redis-transcript"* ]]; then
         cd $LOG_PATH
         HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -F "files=@./${video_fn}" -H 'Content-Type: multipart/form-data' "$URL")
+    elif [[ $SERVICE_NAME == *"dataprep-multimodal-redis-caption"* ]]; then
+        cd $LOG_PATH
+        HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -F "files=@./${image_fn}" -H 'Content-Type: multipart/form-data' "$URL")
     elif [[ $SERVICE_NAME == *"dataprep_get"* ]]; then
         HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -H 'Content-Type: application/json' "$URL")
     elif [[ $SERVICE_NAME == *"dataprep_del"* ]]; then
@@ -149,20 +154,27 @@ function validate_microservices() {
     validate_service \
         "${DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT}" \
         "Data preparation succeeded" \
-        "dataprep-multimodal-redis" \
+        "dataprep-multimodal-redis-transcript" \
         "dataprep-multimodal-redis"
 
-    # echo "Data Prep with Generating Caption"
-    # validate_service \
-    #     "${DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT}" \
-    #     "Data preparation succeeded" \
-    #     "dataprep-multimodal-redis" \
-    #     "dataprep-multimodal-redis"
+    echo "Data Prep with Generating Caption"
+    validate_service \
+        "${DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT}" \
+        "Data preparation succeeded" \
+        "dataprep-multimodal-redis-caption" \
+        "dataprep-multimodal-redis"
 
-    echo "Validating get file"
+    echo "Validating get file returns mp4"
+    validate_service \
+        "${DATAPREP_GET_FILE_ENDPOINT}" \
+        '.mp4' \
+        "dataprep_get" \
+        "dataprep-multimodal-redis"
+
+    echo "Validating get file returns png"
     validate_service \
         "${DATAPREP_GET_VIDEO_ENDPOINT}" \
-        '.mp4' \
+        '.png' \
         "dataprep_get" \
         "dataprep-multimodal-redis"
 
@@ -222,12 +234,19 @@ function validate_megaservice() {
 }
 
 function validate_delete {
-    echo "Validate data prep delete videos"
+    echo "Validate data prep delete files"
     validate_service \
-        "${DATAPREP_DELETE_VIDEO_ENDPOINT}" \
+        "${DATAPREP_DELETE_FILE_ENDPOINT}" \
         '{"status":true}' \
         "dataprep_del" \
         "dataprep-multimodal-redis"
+}
+
+function delete_data() {
+    cd $LOG_PATH
+    echo "Deleting image and video"
+    rm -rf ${image_fn}
+    rm -rf ${video_fn}
 }
 
 function stop_docker() {
@@ -254,6 +273,7 @@ function main() {
     validate_delete
     echo "==== delete validated ===="
 
+    delete_data
     stop_docker
     echo y | docker system prune
 
