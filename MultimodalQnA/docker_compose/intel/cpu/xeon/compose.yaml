@@ -123,6 +123,7 @@ services:
       - embedding-multimodal
       - retriever-multimodal-redis
       - lvm-llava-svc
+      - asr
     ports:
       - "8888:8888"
     environment:
