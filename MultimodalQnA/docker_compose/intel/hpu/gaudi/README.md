@@ -33,7 +33,7 @@ export INDEX_NAME="mm-rag-redis"
 export LLAVA_SERVER_PORT=8399
 export LVM_ENDPOINT="http://${host_ip}:8399"
 export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
-export LVM_MODEL_ID="llava-hf/llava-v1.6-vicuna-13b-hf"
+export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
 export WHISPER_MODEL="base"
 export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
 export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
@@ -135,7 +135,7 @@ By default, the multimodal-embedding and LVM models are set to a default value a
 | Service              | Model                                       |
 | -------------------- | ------------------------------------------- |
 | embedding-multimodal | BridgeTower/bridgetower-large-itm-mlm-gaudi |
-| LVM                  | llava-hf/llava-v1.6-vicuna-13b-hf           |
+| LVM                  | llava-hf/llava-1.5-7b-hf                    |
 
 ### Start all the services Docker Containers
 
