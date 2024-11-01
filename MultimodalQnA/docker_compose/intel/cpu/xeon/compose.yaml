@@ -21,6 +21,8 @@ services:
     ipc: host
     environment:
       ASR_ENDPOINT: ${ASR_ENDPOINT}
+      ASR_SERVICE_PORT: ${ASR_SERVICE_PORT}
+      ASR_SERVICE_ENDPOINT: ${ASR_SERVICE_ENDPOINT}
   redis-vector-db:
     image: redis/redis-stack:7.2.0-v9
     container_name: redis-vector-db
@@ -71,8 +73,6 @@ services:
       https_proxy: ${https_proxy}
       MMEI_EMBEDDING_ENDPOINT: ${MMEI_EMBEDDING_ENDPOINT}
       MM_EMBEDDING_PORT_MICROSERVICE: ${MM_EMBEDDING_PORT_MICROSERVICE}
-      ASR_SERVICE_PORT: ${ASR_SERVICE_PORT}
-      ASR_SERVICE_ENDPOINT: ${ASR_SERVICE_ENDPOINT}
     restart: unless-stopped
   retriever-multimodal-redis:
     image: ${REGISTRY:-opea}/retriever-multimodal-redis:${TAG:-latest}
@@ -134,6 +134,8 @@ services:
       MM_EMBEDDING_PORT_MICROSERVICE: ${MM_EMBEDDING_PORT_MICROSERVICE}
       MM_RETRIEVER_SERVICE_HOST_IP: ${MM_RETRIEVER_SERVICE_HOST_IP}
       LVM_SERVICE_HOST_IP: ${LVM_SERVICE_HOST_IP}
+      ASR_SERVICE_PORT: ${ASR_SERVICE_PORT}
+      ASR_SERVICE_ENDPOINT: ${ASR_SERVICE_ENDPOINT}
     ipc: host
     restart: always
   multimodalqna-ui:
