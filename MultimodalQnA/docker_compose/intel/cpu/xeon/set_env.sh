@@ -3,9 +3,9 @@
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-export no_proxy=${no_proxy}
-export http_proxy=${http_proxy}
-export https_proxy=${http_proxy}
+export no_proxy=${your_no_proxy}
+export http_proxy=${your_http_proxy}
+export https_proxy=${your_http_proxy}
 export EMBEDDER_PORT=6006
 export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMBEDDER_PORT/v1/encode"
 export MM_EMBEDDING_PORT_MICROSERVICE=6000
