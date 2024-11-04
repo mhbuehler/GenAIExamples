@@ -5,7 +5,7 @@ import dataclasses
 from enum import Enum, auto
 from typing import List
 
-from utils import get_b64_frame_from_timestamp
+from utils import get_b64_frame_from_timestamp, convert_audio_to_base64
 
 
 class SeparatorStyle(Enum):
@@ -31,6 +31,7 @@ class Conversation:
     skip_next: bool = False
     split_video: str = None
     image: str = None
+    audio_query_file: str = None
 
     def _template_caption(self):
         out = ""
@@ -82,6 +83,12 @@ class Conversation:
             video_file = self.video_file
             b64_img = get_b64_frame_from_timestamp(video_file, time_of_frame_ms)
         return b64_img
+    
+    def get_b64_audio_query(self):
+        b64_audio = None
+        if self.audio_query_file:
+            b64_audio = convert_audio_to_base64(self.audio_query_file)
+        return b64_audio
 
     def to_gradio_chatbot(self):
         ret = []
