@@ -69,7 +69,7 @@ services:
       INDEX_NAME: ${INDEX_NAME}
     restart: unless-stopped
   lvm-llava:
-    image: ${REGISTRY:-opea}/lvm-llava:${TAG:-latest}
+    image: ${REGISTRY:-opea}/lvm-llava-hpu:${TAG:-latest}
     container_name: lvm-llava
     ports:
       - "8399:8399"

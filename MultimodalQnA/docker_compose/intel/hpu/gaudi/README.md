@@ -33,7 +33,7 @@ export INDEX_NAME="mm-rag-redis"
 export LLAVA_SERVER_PORT=8399
 export LVM_ENDPOINT="http://${host_ip}:8399"
 export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
-export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
+export LVM_MODEL_ID="llava-hf/llava-1.5-13b-hf"
 export WHISPER_MODEL="base"
 export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
 export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
@@ -77,16 +77,16 @@ docker build --no-cache -t opea/retriever-multimodal-redis:latest --build-arg ht
 
 ### 3. Build LVM Images
 
-Build TGI Gaudi image
+Build LLaVA Server image
 
 ```bash
-docker pull ghcr.io/huggingface/tgi-gaudi:2.0.5
+docker build --no-cache -t opea/lvm-llava-hpu:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/lvms/llava/dependency/Dockerfile.intel_hpu .
 ```
 
-Build lvm-tgi microservice image
+Build LVM microservice image
 
 ```bash
-docker build --no-cache -t opea/lvm-tgi:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/lvms/tgi-llava/Dockerfile .
+docker build --no-cache  -t opea/lvm-llava-svc:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/lvms/llava/Dockerfile .
 ```
 
 ### 4. Build dataprep-multimodal-redis Image
@@ -117,8 +117,8 @@ docker build --no-cache -t opea/multimodalqna-ui:latest --build-arg https_proxy=
 Then run the command `docker images`, you will have the following 8 Docker Images:
 
 1. `opea/dataprep-multimodal-redis:latest`
-2. `opea/lvm-tgi:latest`
-3. `ghcr.io/huggingface/tgi-gaudi:2.0.5`
+2. `opea/lvm-llava-hpu:latest`
+3. `opea/lvm-llava-svc:latest`
 4. `opea/retriever-multimodal-redis:latest`
 5. `opea/embedding-multimodal:latest`
 6. `opea/embedding-multimodal-bridgetower:latest`
@@ -135,7 +135,7 @@ By default, the multimodal-embedding and LVM models are set to a default value a
 | Service              | Model                                       |
 | -------------------- | ------------------------------------------- |
 | embedding-multimodal | BridgeTower/bridgetower-large-itm-mlm-gaudi |
-| LVM                  | llava-hf/llava-1.5-7b-hf                    |
+| LVM                  | llava-hf/llava-1.5-13b-hf                   |
 
 ### Start all the services Docker Containers
 
@@ -190,16 +190,25 @@ curl http://${host_ip}:7000/v1/multimodal_retrieval \
     -d "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 ```
 
-4. TGI LLaVA Gaudi Server
+4. lvm-llava
 
+Test with an image and a prompt:
 ```bash
 curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
-    -X POST \
-    -d '{"inputs":"![](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/rabbit.png)What is this a picture of?\n\n","parameters":{"max_new_tokens":16, "seed": 42}}' \
-    -H 'Content-Type: application/json'
+     -X POST \
+     -H "Content-Type:application/json" \
+     -d '{"prompt":"Describe the image please.", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
 ```
 
-5. lvm-tgi
+Test a text prompt without an image:
+```bash
+curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
+     -X POST \
+     -H "Content-Type:application/json" \
+     -d '{"prompt":"What is deep learning?", "img_b64_str": ""}'
+```
+
+5. lvm-llava-svc
 
 ```bash
 curl http://${host_ip}:9399/v1/lvm \
@@ -215,7 +224,7 @@ curl http://${host_ip}:9399/v1/lvm  \
     -d '{"image": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "prompt":"What is this?"}'
 ```
 
-Also, validate LVM TGI Gaudi Server with empty retrieval results
+Also, validate LVM Microservice with empty retrieval results
 
 ```bash
 curl http://${host_ip}:9399/v1/lvm \

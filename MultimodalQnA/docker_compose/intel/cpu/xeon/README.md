@@ -243,11 +243,20 @@ curl http://${host_ip}:7000/v1/multimodal_retrieval \
 
 4. lvm-llava
 
+Test with an image and a prompt:
 ```bash
 curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
      -X POST \
      -H "Content-Type:application/json" \
      -d '{"prompt":"Describe the image please.", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
+```
+
+Test a text prompt without an image:
+```bash
+curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
+     -X POST \
+     -H "Content-Type:application/json" \
+     -d '{"prompt":"What is deep learning?", "img_b64_str": ""}'
 ```
 
 5. lvm-llava-svc

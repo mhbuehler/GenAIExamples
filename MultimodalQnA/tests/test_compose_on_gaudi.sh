@@ -16,17 +16,16 @@ ip_address=$(hostname -I | awk '{print $1}')
 
 export image_fn="apple.png"
 export video_fn="WeAreGoingOnBullrun.mp4"
+export audio_fn="AudioSample.wav"
 export caption_fn="apple.txt"
 
 function build_docker_images() {
     cd $WORKPATH/docker_image_build
-    git clone https://github.com/opea-project/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"main"}" && cd ../
+    git clone https://github.com/mhbuehler/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"main"}" && cd ../
 
     echo "Build all the images with --no-cache, check docker_image_build.log for details..."
-    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding-multimodal retriever-multimodal-redis lvm-tgi dataprep-multimodal-redis"
+    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding-multimodal retriever-multimodal-redis lvm-llava-hpu lvm-llava-svc dataprep-multimodal-redis"
     docker compose -f build.yaml build ${service_list} --no-cache > ${LOG_PATH}/docker_image_build.log
-
-    docker pull ghcr.io/huggingface/tgi-gaudi:2.0.5
 
     docker images && sleep 1s
 }
@@ -42,7 +41,7 @@ function setup_env() {
     export LLAVA_SERVER_PORT=8399
     export LVM_ENDPOINT="http://${host_ip}:8399"
     export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
-    export LVM_MODEL_ID="llava-hf/llava-v1.6-vicuna-13b-hf"
+    export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
     export WHISPER_MODEL="base"
     export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
     export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
@@ -69,6 +68,7 @@ function prepare_data() {
     echo "Downloading image and video"
     wget https://github.com/docarray/docarray/blob/main/tests/toydata/image-data/apple.png?raw=true -O ${image_fn}
     wget http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4 -O ${video_fn}
+    wget https://github.com/intel/intel-extension-for-transformers/raw/main/intel_extension_for_transformers/neural_chat/assets/audio/sample.wav -O ${audio_fn}
     echo "Writing caption file"
     echo "This is an apple."  > ${caption_fn}
 
@@ -84,7 +84,7 @@ function validate_service() {
 
     if [[ $SERVICE_NAME == *"dataprep-multimodal-redis-transcript"* ]]; then
         cd $LOG_PATH
-        HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -F "files=@./${video_fn}" -H 'Content-Type: multipart/form-data' "$URL")
+        HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -F "files=@./${video_fn}" -F "files=@./${audio_fn}" -H 'Content-Type: multipart/form-data' "$URL")
     elif [[ $SERVICE_NAME == *"dataprep-multimodal-redis-caption"* ]]; then
          cd $LOG_PATH
          HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -F "files=@./${image_fn}" -H 'Content-Type: multipart/form-data' "$URL")
@@ -209,7 +209,7 @@ function validate_microservices() {
     sleep 10s
 
     # llava server
-    echo "Evaluating LLAVA tgi-gaudi"
+    echo "Evaluating LLAVA lvm-llava-hpu "
     validate_service \
         "http://${host_ip}:${LLAVA_SERVER_PORT}/generate" \
         '"generated_text":' \
