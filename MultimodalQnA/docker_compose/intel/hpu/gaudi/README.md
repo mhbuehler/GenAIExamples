@@ -97,7 +97,21 @@ docker build --no-cache -t opea/lvm-tgi:latest --build-arg https_proxy=$https_pr
 docker build --no-cache -t opea/dataprep-multimodal-redis:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/dataprep/multimodal/redis/langchain/Dockerfile .
 ```
 
-### 5. Build MegaService Docker Image
+### 5. Build asr images
+
+Build whisper server image
+
+```bash
+docker build --no-cache -t opea/whisper:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/asr/whisper/dependecy/Dockerfile .
+```
+
+Build asr image
+
+```bash
+docker build --no-cache -t opea/asr:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/asr/whisper/Dockerfile .
+```
+
+### 6. Build MegaService Docker Image
 
 To construct the Mega Service, we utilize the [GenAIComps](https://github.com/opea-project/GenAIComps.git) microservice pipeline within the [multimodalqna.py](../../../../multimodalqna.py) Python script. Build MegaService Docker image via below command:
 
@@ -116,16 +130,19 @@ cd  GenAIExamples/MultimodalQnA/ui/
 docker build --no-cache -t opea/multimodalqna-ui:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f ./docker/Dockerfile .
 ```
 
-Then run the command `docker images`, you will have the following 8 Docker Images:
+Then run the command `docker images`, you will have the following 11 Docker Images:
 
 1. `opea/dataprep-multimodal-redis:latest`
 2. `opea/lvm-tgi:latest`
 3. `ghcr.io/huggingface/tgi-gaudi:2.0.5`
 4. `opea/retriever-multimodal-redis:latest`
-5. `opea/embedding-multimodal:latest`
-6. `opea/embedding-multimodal-bridgetower:latest`
-7. `opea/multimodalqna:latest`
-8. `opea/multimodalqna-ui:latest`
+5. `opea/whisper-service`
+6. `opea/asr-service`
+7. `opea/redis-vector-db`
+8. `opea/embedding-multimodal:latest`
+9. `opea/embedding-multimodal-bridgetower:latest`
+10. `opea/multimodalqna:latest`
+11. `opea/multimodalqna-ui:latest`
 
 ## 🚀 Start Microservices
 
