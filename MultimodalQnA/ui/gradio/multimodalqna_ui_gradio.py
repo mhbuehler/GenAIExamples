@@ -50,21 +50,28 @@ def clear_history(state, request: gr.Request):
     if state.image and os.path.exists(state.image):
         os.remove(state.image)
     state = multimodalqna_conv.copy()
-    return (state, state.to_gradio_chatbot(), None, None, None) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), {}, None, None, None) + (disable_btn,) * 1
 
 
-def add_text(state, text, request: gr.Request):
+def add_text(state, text, audio, request: gr.Request):
     logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
-    if len(text) <= 0:
+    if audio:
+        state.audio_query_file = audio
+        state.append_message(state.roles[0], None)
+        state.append_message(state.roles[1], None)
+        state.skip_next = False
+        return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
+    elif len(text) <= 0:
         state.skip_next = True
-        return (state, state.to_gradio_chatbot(), None) + (no_change_btn,) * 1
+        return (state, state.to_gradio_chatbot(), None, None) + (no_change_btn,) * 1
 
     text = text[:2000]  # Hard cut-off
 
     state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
     state.skip_next = False
-    return (state, state.to_gradio_chatbot(), None) + (disable_btn,) * 1
+
+    return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
 
 
 def http_bot(state, request: gr.Request):
@@ -72,6 +79,7 @@ def http_bot(state, request: gr.Request):
     logger.info(f"http_bot. ip: {request.client.host}")
     url = gateway_addr
     is_very_first_query = False
+    is_audio_query = state.audio_query_file is not None
     if state.skip_next:
         # This generate call is skipped due to invalid inputs
         path_to_sub_videos = state.get_path_to_subvideos()
@@ -99,6 +107,12 @@ def http_bot(state, request: gr.Request):
     logger.info(f"==== url request ====\n{gateway_addr}")
 
     state.messages[-1][-1] = "▌"
+
+    if is_audio_query:
+        pload['audio'] = state.get_b64_audio_query()
+        state.messages[-2][-1] = "▌"
+        state.audio_query_file = None
+
     yield (state, state.to_gradio_chatbot(), state.split_video, state.image) + (disable_btn,) * 1
 
     try:
@@ -152,12 +166,13 @@ def http_bot(state, request: gr.Request):
         return
 
     state.messages[-1][-1] = message
-    yield (
-        state,
-        state.to_gradio_chatbot(),
-        gr.Video(state.split_video, visible=state.split_video is not None),
-        gr.Image(state.image, visible=state.image is not None),
-    ) + (enable_btn,) * 1
+
+    if is_audio_query:
+        state.messages[-2][-1] = metadata['initial_query']
+
+    yield (state, state.to_gradio_chatbot(),
+           gr.Video(state.split_video, visible=state.split_video is not None),
+           gr.Image(state.image, visible=state.image is not None)) + (enable_btn,) * 1
 
     logger.info(f"{state.messages[-1][-1]}")
     return
@@ -436,13 +451,13 @@ with gr.Blocks() as upload_pdf:
 with gr.Blocks() as qna:
     state = gr.State(multimodalqna_conv.copy())
     with gr.Row():
-        with gr.Column(scale=4):
+        with gr.Column(scale=2):
             video = gr.Video(height=512, width=512, elem_id="video", visible=True, label="Media")
             image = gr.Image(height=512, width=512, elem_id="image", visible=False, label="Media")
-        with gr.Column(scale=7):
+        with gr.Column(scale=9):
             chatbot = gr.Chatbot(elem_id="chatbot", label="MultimodalQnA Chatbot", height=390)
             with gr.Row():
-                with gr.Column(scale=6):
+                with gr.Column(scale=3):
                     # textbox.render()
                     textbox = gr.Textbox(
                         # show_label=False,
@@ -451,6 +466,8 @@ with gr.Blocks() as qna:
                         info="Enter a text query below",
                         # submit_btn=False,
                     )
+                with gr.Column(scale=5, min_width=200):
+                    audio = gr.Audio(type="filepath", sources=["microphone", "upload"], label="Record or upload a voice query here", show_label=True)
                 with gr.Column(scale=1, min_width=100):
                     with gr.Row():
                         submit_btn = gr.Button(value="Send", variant="primary", interactive=True)
@@ -462,13 +479,13 @@ with gr.Blocks() as qna:
         [
             state,
         ],
-        [state, chatbot, textbox, video, image, clear_btn],
+        [state, chatbot, textbox, audio, video, image, clear_btn],
     )
 
     submit_btn.click(
         add_text,
-        [state, textbox],
-        [state, chatbot, textbox, clear_btn],
+        [state, textbox, audio],
+        [state, chatbot, textbox, audio, clear_btn],
     ).then(
         http_bot,
         [
