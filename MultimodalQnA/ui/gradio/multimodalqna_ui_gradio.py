@@ -54,17 +54,17 @@ def clear_history(state, request: gr.Request):
 
 
 def add_text(state, text, request: gr.Request):
-    logger.info(f"add_text. ip: {request.client.host}. len: {len(text['text'])}")
-    if len(text['text']) <= 0:
+    logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
+    if len(text) <= 0:
         state.skip_next = True
-        return (state, state.to_gradio_chatbot(), {}) + (no_change_btn,) * 1
+        return (state, state.to_gradio_chatbot(), None) + (no_change_btn,) * 1
 
-    text['text'] = text['text'][:2000]  # Hard cut-off
+    text = text[:2000]  # Hard cut-off
 
-    state.append_message(state.roles[0], text['text'])
+    state.append_message(state.roles[0], text)
     state.append_message(state.roles[1], None)
     state.skip_next = False
-    return (state, state.to_gradio_chatbot(), {}) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), None) + (disable_btn,) * 1
 
 
 def http_bot(state, request: gr.Request):
@@ -159,22 +159,22 @@ def http_bot(state, request: gr.Request):
     logger.info(f"{state.messages[-1][-1]}")
     return
 
-def ingest_video_gen_transcript(filepath, request: gr.Request):
-    yield (gr.Textbox(visible=True, value="Please wait for ingesting your uploaded video into database..."))
+def ingest_gen_transcript(filepath, filetype, request: gr.Request):
+    yield (gr.Textbox(visible=True, value=f"Please wait while your uploaded {filetype} is ingested into the database..."))
     verified_filepath = os.path.normpath(filepath)
     if not verified_filepath.startswith(tmp_upload_folder):
-        print("Found malicious video file name!")
+        print(f"Found malicious {filetype} file name!")
         yield (
             gr.Textbox(
                 visible=True,
-                value="Your uploaded video's file name has special characters that are not allowed. Please consider update the video file name!",
+                value=f"Your uploaded {filetype}'s file name has special characters that are not allowed (depends on the OS, some examples are \, /, :, and *). Please consider changing the file name.",
             )
         )
         return
     basename = os.path.basename(verified_filepath)
     dest = os.path.join(static_dir, basename)
     shutil.copy(verified_filepath, dest)
-    print("Done copy uploaded file to static folder!")
+    print("Done copying uploaded file to static folder.")
     headers = {
         # 'Content-Type': 'multipart/form-data'
     }
@@ -186,7 +186,7 @@ def ingest_video_gen_transcript(filepath, request: gr.Request):
     if response.status_code == 200:
         response = response.json()
         print(response)
-        yield (gr.Textbox(visible=True, value="Video ingestion is done. Saving your uploaded video..."))
+        yield (gr.Textbox(visible=True, value=f"The {filetype} ingestion is done. Saving your uploaded {filetype}..."))
         time.sleep(2)
         fn_no_ext = Path(dest).stem
         if "file_id_maps" in response and fn_no_ext in response["file_id_maps"]:
@@ -196,7 +196,7 @@ def ingest_video_gen_transcript(filepath, request: gr.Request):
             yield (
                 gr.Textbox(
                     visible=True,
-                    value="Congratulation! Your upload is done!\nClick the X button on the top right of the video upload box to upload another video.",
+                    value=f"Congratulations, your upload is done!\nClick the X button on the top right of the {filetype} upload box to upload another {filetype}.",
                 )
             )
             return
@@ -204,29 +204,29 @@ def ingest_video_gen_transcript(filepath, request: gr.Request):
         yield (
             gr.Textbox(
                 visible=True,
-                value="Something wrong!\nPlease click the X button on the top right of the video upload boxreupload your video!",
+                value=f"Something went wrong (server error: {response.status_code})!\nPlease click the X button on the top right of the {filetype} upload box to reupload your video.",
             )
         )
         time.sleep(2)
     return
 
 
-def ingest_video_gen_caption(filepath, request: gr.Request):
-    yield (gr.Textbox(visible=True, value="Please wait for ingesting your uploaded video into database..."))
+def ingest_gen_caption(filepath, filetype, request: gr.Request):
+    yield (gr.Textbox(visible=True, value=f"Please wait while your uploaded {filetype} is ingested into the database..."))
     verified_filepath = os.path.normpath(filepath)
     if not verified_filepath.startswith(tmp_upload_folder):
-        print("Found malicious video file name!")
+        print(f"Found malicious {filetype} file name!")
         yield (
             gr.Textbox(
                 visible=True,
-                value="Your uploaded video's file name has special characters that are not allowed. Please consider update the video file name!",
+                value=f"Your uploaded {filetype}'s file name has special characters that are not allowed (depends on the OS, some examples are \, /, :, and *). Please consider changing the file name.",
             )
         )
         return
     basename = os.path.basename(verified_filepath)
     dest = os.path.join(static_dir, basename)
     shutil.copy(verified_filepath, dest)
-    print("Done copy uploaded file to static folder!")
+    print("Done copying uploaded file to static folder.")
     headers = {
         # 'Content-Type': 'multipart/form-data'
     }
@@ -238,7 +238,7 @@ def ingest_video_gen_caption(filepath, request: gr.Request):
     if response.status_code == 200:
         response = response.json()
         print(response)
-        yield (gr.Textbox(visible=True, value="Video ingestion is done. Saving your uploaded video..."))
+        yield (gr.Textbox(visible=True, value=f"The {filetype} ingestion is done. Saving your uploaded {filetype}..."))
         time.sleep(2)
         fn_no_ext = Path(dest).stem
         if "file_id_maps" in response and fn_no_ext in response["file_id_maps"]:
@@ -248,7 +248,7 @@ def ingest_video_gen_caption(filepath, request: gr.Request):
             yield (
                 gr.Textbox(
                     visible=True,
-                    value="Congratulation! Your upload is done!\nClick the X button on the top right of the video upload box to upload another video.",
+                    value=f"Congratulations, your upload is done!\nClick the X button on the top right of the {filetype} upload box to upload another {filetype}.",
                 )
             )
             return
@@ -256,14 +256,14 @@ def ingest_video_gen_caption(filepath, request: gr.Request):
         yield (
             gr.Textbox(
                 visible=True,
-                value="Something wrong!\nPlease click the X button on the top right of the video upload boxreupload your video!",
+                value=f"Something went wrong (server error: {response.status_code})!\nPlease click the X button on the top right of the {filetype} upload box to reupload your video.",
             )
         )
         time.sleep(2)
     return
 
 
-def ingest_image_gen_caption(filepath, request: gr.Request):
+def ingest_with_text(filepath, text, request: gr.Request):
     yield (gr.Textbox(visible=True, value="Please wait for your uploaded image to be ingested into the database..."))
     verified_filepath = os.path.normpath(filepath)
     if not verified_filepath.startswith(tmp_upload_folder):
@@ -271,21 +271,29 @@ def ingest_image_gen_caption(filepath, request: gr.Request):
         yield (
             gr.Textbox(
                 visible=True,
-                value="Your uploaded image's file name has special characters that are not allowed. Please consider updating the file name!",
+                value="Your uploaded image's file name has special characters that are not allowed (depends on the OS, some examples are \, /, :, and *). Please consider changing the file name.",
             )
         )
         return
     basename = os.path.basename(verified_filepath)
     dest = os.path.join(static_dir, basename)
     shutil.copy(verified_filepath, dest)
-    print("Done copying uploaded file to static folder!")
+    text_basename = "{}.txt".format(os.path.splitext(basename)[0])
+    text_dest = os.path.join(static_dir, text_basename)
+    with open(text_dest, "w") as file:
+        file.write(text)
+    print("Done copying uploaded files to static folder!")
     headers = {
         # 'Content-Type': 'multipart/form-data'
     }
-    files = {
-        "files": open(dest, "rb"),
-    }
-    response = requests.post(dataprep_gen_caption_addr, headers=headers, files=files)
+    files = [
+        ('files', (basename, open(dest, "rb"))),
+        ('files', (text_basename, open(text_dest, "rb")))
+    ]
+    try:
+        response = requests.post(dataprep_ingest_addr, headers=headers, files=files)
+    finally:
+        os.remove(text_dest)
     print(response.status_code)
     if response.status_code == 200:
         response = response.json()
@@ -308,15 +316,19 @@ def ingest_image_gen_caption(filepath, request: gr.Request):
         yield (
             gr.Textbox(
                 visible=True,
-                value="Something went wrong!\nPlease click the X button on the top right of the image upload box to reupload your image!",
+                value=f"Something went wrong (server error: {response.status_code})!\nPlease click the X button on the top right of the image upload box to reupload your image!",
             )
         )
         time.sleep(2)
     return
 
 
-def clear_uploaded_video(request: gr.Request):
+def hide_text(request: gr.Request):
     return gr.Textbox(visible=False)
+
+
+def clear_text(request: gr.Request):
+    return None
 
     
 with gr.Blocks() as upload_video:
@@ -342,10 +354,10 @@ with gr.Blocks() as upload_video:
                                           info="How should text be ingested?",
                                           value='transcript')
             text_upload_result = gr.Textbox(visible=False, interactive=False, label="Upload Status")
-        video_upload_trans.upload(ingest_video_gen_transcript, [video_upload_trans], [text_upload_result])
-        video_upload_trans.clear(clear_uploaded_video, [], [text_upload_result])
-        video_upload_cap.upload(ingest_video_gen_caption, [video_upload_cap], [text_upload_result])
-        video_upload_cap.clear(clear_uploaded_video, [], [text_upload_result])
+        video_upload_trans.upload(ingest_gen_transcript, [video_upload_trans, gr.Textbox(value="video", visible=False)], [text_upload_result])
+        video_upload_trans.clear(hide_text, [], [text_upload_result])
+        video_upload_cap.upload(ingest_gen_caption, [video_upload_cap, gr.Textbox(value="video", visible=False)], [text_upload_result])
+        video_upload_cap.clear(hide_text, [], [text_upload_result])
         text_options_radio.change(select_upload_type, [text_options_radio], [video_upload_trans, video_upload_cap])
 
 with gr.Blocks() as upload_image:
@@ -353,9 +365,17 @@ with gr.Blocks() as upload_image:
     gr.Markdown(
         "Use this interface to ingest your own image and generate a caption for it"
     )
+
+    def select_upload_type(choice, request: gr.Request):
+        if choice == 'gen_caption':
+            return gr.Image(sources="upload", visible=True), gr.Image(sources="upload", visible=False)
+        else:
+            return gr.Image(sources="upload", visible=False), gr.Image(sources="upload", visible=True)
+
     with gr.Row():
         with gr.Column(scale=6):
-            image_upload_cap = gr.Image(type='filepath', sources="upload", elem_id="image_upload_cap")
+            image_upload_cap = gr.Image(type='filepath', sources="upload", elem_id="image_upload_cap", visible=True)
+            image_upload_text = gr.Image(type='filepath', sources="upload", elem_id="image_upload_cap", visible=False)
         with gr.Column(scale=3):
             text_options_radio = gr.Radio([("Generate caption", 'gen_caption'),
                                            ("Custom caption or label", 'custom_caption')],
@@ -363,9 +383,16 @@ with gr.Blocks() as upload_image:
                                           info="How should text be ingested?",
                                           value='gen_caption')
             custom_caption = gr.Textbox(visible=True, interactive=True, label="Custom Caption or Label")
-            text_upload_result_cap = gr.Textbox(visible=False, interactive=False, label="Upload Status")
-        image_upload_cap.upload(ingest_image_gen_caption, [image_upload_cap], [text_upload_result_cap])
-        image_upload_cap.clear(clear_uploaded_video, [], [text_upload_result_cap])
+            text_upload_result = gr.Textbox(visible=False, interactive=False, label="Upload Status")
+        image_upload_cap.upload(ingest_gen_caption, [image_upload_cap, gr.Textbox(value="image", visible=False)], [text_upload_result])
+        image_upload_cap.clear(hide_text, [], [text_upload_result])
+        image_upload_text.upload(
+            ingest_with_text,
+            [image_upload_text, custom_caption],
+            [text_upload_result]
+            ).then(clear_text, [], [custom_caption])
+        image_upload_text.clear(hide_text, [], [text_upload_result])
+        text_options_radio.change(select_upload_type, [text_options_radio], [image_upload_cap, image_upload_text])
 
 with gr.Blocks() as upload_audio:
     gr.Markdown("# Ingest Your Own Audio Using Generated Transcripts")
@@ -374,11 +401,12 @@ with gr.Blocks() as upload_audio:
     )
     with gr.Row():
         with gr.Column(scale=6):
-            image_upload_cap = gr.Audio()
+            audio_upload = gr.Audio(type="filepath")
         with gr.Column(scale=3):
-            text_upload_result_cap = gr.Textbox(visible=False, interactive=False, label="Upload Status")
-        image_upload_cap.upload(ingest_image_gen_caption, [image_upload_cap], [text_upload_result_cap])
-        image_upload_cap.clear(clear_uploaded_video, [], [text_upload_result_cap])
+            text_upload_result = gr.Textbox(visible=False, interactive=False, label="Upload Status")
+        audio_upload.upload(ingest_gen_transcript, [audio_upload, gr.Textbox(value="audio", visible=False)], [text_upload_result])
+        audio_upload.stop_recording(ingest_gen_transcript, [audio_upload, gr.Textbox(value="audio", visible=False)], [text_upload_result])
+        audio_upload.clear(hide_text, [], [text_upload_result])
 
 with gr.Blocks() as upload_pdf:
     gr.Markdown("# Ingest Your Own PDF")
@@ -390,26 +418,26 @@ with gr.Blocks() as upload_pdf:
             image_upload_cap = gr.File()
         with gr.Column(scale=3):
             text_upload_result_cap = gr.Textbox(visible=False, interactive=False, label="Upload Status")
-        image_upload_cap.upload(ingest_image_gen_caption, [image_upload_cap], [text_upload_result_cap])
-        image_upload_cap.clear(clear_uploaded_video, [], [text_upload_result_cap])
+        image_upload_cap.upload(ingest_gen_caption, [image_upload_cap, gr.Textbox(value="PDF", visible=False)], [text_upload_result_cap])
+        image_upload_cap.clear(hide_text, [], [text_upload_result_cap])
 
 with gr.Blocks() as qna:
     state = gr.State(multimodalqna_conv.copy())
     with gr.Row():
         with gr.Column(scale=4):
-            video = gr.Video(height=512, width=512, elem_id="video", visible=True)
-            image = gr.Image(height=512, width=512, elem_id="image", visible=False)
+            video = gr.Video(height=512, width=512, elem_id="video", visible=True, label="Media")
+            image = gr.Image(height=512, width=512, elem_id="image", visible=False, label="Media")
         with gr.Column(scale=7):
             chatbot = gr.Chatbot(elem_id="chatbot", label="MultimodalQnA Chatbot", height=390)
             with gr.Row():
                 with gr.Column(scale=6):
                     # textbox.render()
-                    textbox = gr.MultimodalTextbox(
+                    textbox = gr.Textbox(
                         # show_label=False,
                         # container=False,
                         label="Query",
-                        info="Enter your query here!",
-                        submit_btn=False,
+                        info="Enter a text query below",
+                        # submit_btn=False,
                     )
                 with gr.Column(scale=1, min_width=100):
                     with gr.Row():
@@ -447,8 +475,6 @@ with gr.Blocks(css=css) as demo:
             upload_image.render()
         with gr.TabItem("Upload Audio"):
             upload_audio.render()
-        with gr.TabItem("Upload PDF"):
-            upload_pdf.render()
 
 demo.queue()
 app = gr.mount_gradio_app(app, demo, path="/")
@@ -463,6 +489,9 @@ if __name__ == "__main__":
     parser.add_argument("--share", action="store_true")
 
     backend_service_endpoint = os.getenv("BACKEND_SERVICE_ENDPOINT", "http://localhost:8888/v1/multimodalqna")
+    dataprep_ingest_endpoint = os.getenv(
+        "DATAPREP_INGEST_SERVICE_ENDPOINT", "http://localhost:6007/v1/ingest_with_text"
+    )
     dataprep_gen_transcript_endpoint = os.getenv(
         "DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT", "http://localhost:6007/v1/generate_transcripts"
     )
@@ -473,6 +502,8 @@ if __name__ == "__main__":
     logger.info(f"args: {args}")
     global gateway_addr
     gateway_addr = backend_service_endpoint
+    global dataprep_ingest_addr
+    dataprep_ingest_addr = dataprep_ingest_endpoint
     global dataprep_gen_transcript_addr
     dataprep_gen_transcript_addr = dataprep_gen_transcript_endpoint
     global dataprep_gen_caption_addr
