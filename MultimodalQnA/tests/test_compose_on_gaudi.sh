@@ -37,6 +37,9 @@ function setup_env() {
     export EMBEDDER_PORT=6006
     export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMBEDDER_PORT/v1/encode"
     export MM_EMBEDDING_PORT_MICROSERVICE=6000
+    export ASR_ENDPOINT=http://$host_ip:7066
+    export ASR_SERVICE_PORT=3001
+    export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
     export REDIS_URL="redis://${host_ip}:6379"
     export REDIS_HOST=${host_ip}
     export INDEX_NAME="mm-rag-redis"
@@ -240,6 +243,14 @@ function validate_megaservice() {
         "multimodalqna" \
         "multimodalqna-backend-server" \
         '{"messages": "What is the revenue of Nike in 2023?"}'
+    
+    echo "Validate megaservice with first audio query"
+    validate_service \
+        "http://${host_ip}:8888/v1/multimodalqna" \
+        '"time_of_frame_ms":' \
+        "multimodalqna" \
+        "multimodalqna-backend-server" \
+        '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
 
     echo "Validate megaservice with follow-up query"
     validate_service \
