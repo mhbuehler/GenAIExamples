@@ -378,7 +378,9 @@ curl http://${host_ip}:8888/v1/multimodalqna \
 ```
 
 ```bash
-curl http://${host_ip}:8888/v1/multimodalqna     -H "Content-Type: application/json"     -d '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
+curl http://${host_ip}:8888/v1/multimodalqna     
+    -H "Content-Type: application/json"     
+    -d '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
 ```
 
 ```bash
