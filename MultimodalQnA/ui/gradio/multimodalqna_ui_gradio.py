@@ -337,8 +337,8 @@ def clear_text(request: gr.Request):
 
 
 with gr.Blocks() as upload_video:
-    gr.Markdown("# Ingest Your Own Video Using Generated Transcripts or Captions")
-    gr.Markdown("Use this interface to ingest your own video and generate transcripts or captions for it")
+    gr.Markdown("# Ingest Your Own Video Using Generated Transcripts")
+    gr.Markdown("Use this interface to ingest your own video and generate transcripts for it (video contains voice)")
 
     def select_upload_type(choice, request: gr.Request):
         if choice == "transcript":
@@ -349,7 +349,7 @@ with gr.Blocks() as upload_video:
     with gr.Row():
         with gr.Column(scale=6):
             video_upload_trans = gr.Video(sources="upload", elem_id="video_upload_trans", visible=True)
-            video_upload_cap = gr.Video(sources="upload", elem_id="video_upload_cap", visible=False)
+            # video_upload_cap = gr.Video(sources="upload", elem_id="video_upload_cap", visible=False)
         with gr.Column(scale=3):
             text_options_radio = gr.Radio(
                 [
@@ -359,17 +359,18 @@ with gr.Blocks() as upload_video:
                 label="Text Options",
                 info="How should text be ingested?",
                 value="transcript",
+                visible=False,
             )
             text_upload_result = gr.Textbox(visible=False, interactive=False, label="Upload Status")
         video_upload_trans.upload(
             ingest_gen_transcript, [video_upload_trans, gr.Textbox(value="video", visible=False)], [text_upload_result]
         )
         video_upload_trans.clear(hide_text, [], [text_upload_result])
-        video_upload_cap.upload(
-            ingest_gen_caption, [video_upload_cap, gr.Textbox(value="video", visible=False)], [text_upload_result]
-        )
-        video_upload_cap.clear(hide_text, [], [text_upload_result])
-        text_options_radio.change(select_upload_type, [text_options_radio], [video_upload_trans, video_upload_cap])
+        # video_upload_cap.upload(
+        #     ingest_gen_caption, [video_upload_cap, gr.Textbox(value="video", visible=False)], [text_upload_result]
+        # )
+        # video_upload_cap.clear(hide_text, [], [text_upload_result])
+        # text_options_radio.change(select_upload_type, [text_options_radio], [video_upload_trans, video_upload_cap])
 
 with gr.Blocks() as upload_image:
     gr.Markdown("# Ingest Your Own Image Using Generated or Custom Captions/Labels")
