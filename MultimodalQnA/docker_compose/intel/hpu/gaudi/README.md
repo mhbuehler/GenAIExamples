@@ -83,7 +83,7 @@ docker build --no-cache -t opea/retriever-multimodal-redis:latest --build-arg ht
 Build TGI Gaudi image
 
 ```bash
-docker pull ghcr.io/huggingface/tgi-gaudi:2.0.5
+docker pull ghcr.io/huggingface/tgi-gaudi:2.0.6
 ```
 
 Build lvm-tgi microservice image
@@ -135,7 +135,7 @@ Then run the command `docker images`, you will have the following 11 Docker Imag
 
 1. `opea/dataprep-multimodal-redis:latest`
 2. `opea/lvm-tgi:latest`
-3. `ghcr.io/huggingface/tgi-gaudi:2.0.5`
+3. `ghcr.io/huggingface/tgi-gaudi:2.0.6`
 4. `opea/retriever-multimodal-redis:latest`
 5. `opea/whisper-service`
 6. `opea/asr-service`
