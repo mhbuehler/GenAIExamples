@@ -50,13 +50,14 @@ def clear_history(state, request: gr.Request):
     if state.image and os.path.exists(state.image):
         os.remove(state.image)
     state = multimodalqna_conv.copy()
-    return (state, state.to_gradio_chatbot(), {}, None, None, None) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), None, None, None, None) + (disable_btn,) * 1
 
 
 def add_text(state, text, audio, request: gr.Request):
     logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
     if audio:
         state.audio_query_file = audio
+        print('audio query path is {}'.format(audio))
         state.append_message(state.roles[0], None)
         state.append_message(state.roles[1], None)
         state.skip_next = False
@@ -92,8 +93,12 @@ def http_bot(state, request: gr.Request):
         new_state = multimodalqna_conv.copy()
         new_state.append_message(new_state.roles[0], state.messages[-2][1])
         new_state.append_message(new_state.roles[1], None)
+        new_state.audio_query_file = state.audio_query_file
         state = new_state
 
+    print('Query file? {}'.format(is_audio_query))
+    print('File: {}'.format(state.audio_query_file))
+    
     # Construct prompt
     prompt = state.get_prompt()
 
@@ -109,9 +114,8 @@ def http_bot(state, request: gr.Request):
     state.messages[-1][-1] = "▌"
 
     if is_audio_query:
-        pload['audio'] = state.get_b64_audio_query()
         state.messages[-2][-1] = "▌"
-        state.audio_query_file = None
+        # state.audio_query_file = None
 
     yield (state, state.to_gradio_chatbot(), state.split_video, state.image) + (disable_btn,) * 1
 
@@ -168,7 +172,7 @@ def http_bot(state, request: gr.Request):
     state.messages[-1][-1] = message
 
     if is_audio_query:
-        state.messages[-2][-1] = metadata['initial_query']
+        state.messages[-2][-1] = "--initial query placeholder--"  # metadata['initial_query']
 
     yield (state, state.to_gradio_chatbot(),
            gr.Video(state.split_video, visible=state.split_video is not None),
