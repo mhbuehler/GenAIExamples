@@ -58,7 +58,7 @@ def add_text(state, text, audio, request: gr.Request):
     if audio:
         state.audio_query_file = audio
         print('audio query path is {}'.format(audio))
-        state.append_message(state.roles[0], None)
+        state.append_message(state.roles[0], "--input placeholder--")
         state.append_message(state.roles[1], None)
         state.skip_next = False
         return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
@@ -113,8 +113,8 @@ def http_bot(state, request: gr.Request):
 
     state.messages[-1][-1] = "▌"
 
-    if is_audio_query:
-        state.messages[-2][-1] = "▌"
+    # if is_audio_query:
+        # state.messages[-2][-1] = "▌"
         # state.audio_query_file = None
 
     yield (state, state.to_gradio_chatbot(), state.split_video, state.image) + (disable_btn,) * 1
@@ -172,7 +172,8 @@ def http_bot(state, request: gr.Request):
     state.messages[-1][-1] = message
 
     if is_audio_query:
-        state.messages[-2][-1] = "--initial query placeholder--"  # metadata['initial_query']
+        state.messages[-2][-1] = "--transcribed audio not available--" # metadata['decoded_audio_input']
+        state.audio_query_file = None
 
     yield (state, state.to_gradio_chatbot(),
            gr.Video(state.split_video, visible=state.split_video is not None),

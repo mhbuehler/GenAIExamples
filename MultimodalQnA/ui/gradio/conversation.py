@@ -42,20 +42,29 @@ class Conversation:
     def get_prompt(self):
         messages = self.messages
         if len(messages) > 1 and messages[1][1] is None:
-            # Need to do RAG. prompt is the query only
-            ret = messages[0][1]
+            # Need to do RAG. If the query is text, prompt is the query only
+            if self.audio_query_file:
+                ret = [{"role": "user", "content": [{"type": "audio", "audio": self.get_b64_audio_query()}]}]
+            else:
+                ret = messages[0][1]
         else:
             # No need to do RAG. Thus, prompt of chatcompletion format
             conv_dict = []
             if self.sep_style == SeparatorStyle.SINGLE:
                 for i, (role, message) in enumerate(messages):
                     if message:
+                        dic = {"role": role}
                         if i != 0:
-                            dic = {"role": role, "content": message}
+                            if i == len(messages)-1 and self.audio_query_file:
+                                dic["content"] = [{"type": "audio", "audio": self.get_b64_audio_query()}]
+                            else:
+                                dic["content"] = message
                         else:
-                            dic = {"role": role}
                             if self.time_of_frame_ms and self.video_file:
-                                content = [{"type": "text", "text": message}]
+                                if self.audio_query_file:
+                                    content = [{"type": "audio", "audio": self.get_b64_audio_query()}]
+                                else:
+                                    content = [{"type": "text", "text": message}]
                                 if self.base64_frame:
                                     base64_frame = self.base64_frame
                                 else:
@@ -148,6 +157,7 @@ class Conversation:
             "base64_frame": self.base64_frame,
             "split_video": self.split_video,
             "image": self.image,
+            "audio_query_file": self.audio_query_file,
         }
 
 
@@ -164,4 +174,5 @@ multimodalqna_conv = Conversation(
     base64_frame=None,
     split_video=None,
     image=None,
+    audio_query_file=None,
 )
