@@ -172,7 +172,7 @@ def http_bot(state, request: gr.Request):
     state.messages[-1][-1] = message
 
     if is_audio_query:
-        state.messages[-2][-1] = "--transcribed audio not available--" # metadata['decoded_audio_input']
+        state.messages[-2][-1] = metadata.get("audio", "--transcribed audio not available--")
         state.audio_query_file = None
 
     yield (state, state.to_gradio_chatbot(),
@@ -455,6 +455,13 @@ with gr.Blocks() as upload_pdf:
 
 with gr.Blocks() as qna:
     state = gr.State(multimodalqna_conv.copy())
+
+    def select_query_type(choice, request: gr.Request):
+        if choice == "audio":
+            return gr.Audio(type="filepath", sources=["microphone", "upload"], label="Record or upload a voice query", show_label=True, visible=True), gr.Textbox(label="Query", info="Enter a text query", visible=False)
+        else:
+            return gr.Audio(type="filepath", sources=["microphone", "upload"], label="Record or upload a voice query", show_label=True, visible=False), gr.Textbox(label="Query", info="Enter a text query", visible=True)
+        
     with gr.Row():
         with gr.Column(scale=2):
             video = gr.Video(height=512, width=512, elem_id="video", visible=True, label="Media")
@@ -462,22 +469,29 @@ with gr.Blocks() as qna:
         with gr.Column(scale=9):
             chatbot = gr.Chatbot(elem_id="chatbot", label="MultimodalQnA Chatbot", height=390)
             with gr.Row():
-                with gr.Column(scale=3):
+                with gr.Column(scale=5):
                     # textbox.render()
                     textbox = gr.Textbox(
                         # show_label=False,
                         # container=False,
                         label="Query",
-                        info="Enter a text query below",
+                        info="Enter a text query",
+                        visible=True,
                         # submit_btn=False,
                     )
-                with gr.Column(scale=5, min_width=200):
-                    audio = gr.Audio(type="filepath", sources=["microphone", "upload"], label="Record or upload a voice query here", show_label=True)
+                    audio = gr.Audio(type="filepath", sources=["microphone", "upload"], label="Record or upload a voice query", show_label=True, visible=False)
+                with gr.Column(scale=3, min_width=100):
+                    query_type_radio = gr.Radio(
+                        [("Text", "text"), ("Speech Audio", "audio")],
+                        label="Query Type",
+                        value="text",
+                        )
                 with gr.Column(scale=1, min_width=100):
                     with gr.Row():
                         submit_btn = gr.Button(value="Send", variant="primary", interactive=True)
                     with gr.Row(elem_id="buttons") as button_row:
                         clear_btn = gr.Button(value="🗑️  Clear", interactive=False)
+                query_type_radio.change(select_query_type, [query_type_radio], [audio, textbox])
 
     clear_btn.click(
         clear_history,

@@ -54,28 +54,16 @@ class Conversation:
                 for i, (role, message) in enumerate(messages):
                     if message:
                         dic = {"role": role}
-                        if i != 0:
-                            if i == len(messages)-1 and self.audio_query_file:
-                                dic["content"] = [{"type": "audio", "audio": self.get_b64_audio_query()}]
-                            else:
-                                dic["content"] = message
+                        if self.audio_query_file:
+                            content = [{"type": "audio", "audio": self.get_b64_audio_query()}]
                         else:
-                            if self.time_of_frame_ms and self.video_file:
-                                if self.audio_query_file:
-                                    content = [{"type": "audio", "audio": self.get_b64_audio_query()}]
-                                else:
-                                    content = [{"type": "text", "text": message}]
-                                if self.base64_frame:
-                                    base64_frame = self.base64_frame
-                                else:
-                                    base64_frame = get_b64_frame_from_timestamp(self.video_file, self.time_of_frame_ms)
-                                    self.base64_frame = base64_frame
-                                if base64_frame is None:
-                                    base64_frame = ""
-                                content.append({"type": "image_url", "image_url": {"url": base64_frame}})
-                            else:
-                                content = message
-                            dic["content"] = content
+                            content = [{"type": "text", "text": message}]
+                        if i == 0 and self.time_of_frame_ms and self.video_file:    
+                            base64_frame = self.base64_frame if self.base64_frame else get_b64_frame_from_timestamp(self.video_file, self.time_of_frame_ms)
+                            if base64_frame is None:
+                                base64_frame = ""
+                            content.append({"type": "image_url", "image_url": {"url": base64_frame}})
+                        dic["content"] = content
                         conv_dict.append(dic)
             else:
                 raise ValueError(f"Invalid style: {self.sep_style}")
