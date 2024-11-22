@@ -119,7 +119,7 @@ def http_bot(state, request: gr.Request):
             timeout=100,
         )
         print(response.status_code)
-        print(response.json())
+        # print(response.json())
 
         if response.status_code == 200:
             response = response.json()
@@ -203,7 +203,7 @@ def ingest_gen_transcript(filepath, filetype, request: gr.Request):
     print(response.status_code)
     if response.status_code == 200:
         response = response.json()
-        print(response)
+        # print(response)
         yield (gr.Textbox(visible=True, value=f"The {filetype} ingestion is done. Saving your uploaded {filetype}..."))
         time.sleep(2)
         fn_no_ext = Path(dest).stem
@@ -257,7 +257,7 @@ def ingest_gen_caption(filepath, filetype, request: gr.Request):
     print(response.status_code)
     if response.status_code == 200:
         response = response.json()
-        print(response)
+        # print(response)
         yield (gr.Textbox(visible=True, value=f"The {filetype} ingestion is done. Saving your uploaded {filetype}..."))
         time.sleep(2)
         fn_no_ext = Path(dest).stem
@@ -314,7 +314,7 @@ def ingest_with_text(filepath, text, request: gr.Request):
     print(response.status_code)
     if response.status_code == 200:
         response = response.json()
-        print(response)
+        # print(response)
         yield (gr.Textbox(visible=True, value="Image ingestion is done. Saving your uploaded image..."))
         time.sleep(2)
         fn_no_ext = Path(dest).stem
