@@ -34,6 +34,7 @@ function start_services() {
     export HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN}
     export MEGA_SERVICE_HOST_IP=${ip_address}
     export LLM_SERVICE_HOST_IP=${ip_address}
+    export LLM_SERVICE_PORT=9000
     export BACKEND_SERVICE_ENDPOINT="http://${ip_address}:8888/v1/faqgen"
 
     sed -i "s/backend_address/$ip_address/g" $WORKPATH/ui/svelte/.env
@@ -140,7 +141,7 @@ function validate_frontend() {
 
     sed -i "s/localhost/$ip_address/g" playwright.config.ts
 
-    conda install -c conda-forge nodejs -y
+    conda install -c conda-forge nodejs=22.6.0 -y
     npm install && npm ci && npx playwright install --with-deps
     node -v && npm -v && pip list
 
