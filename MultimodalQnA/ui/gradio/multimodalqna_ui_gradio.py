@@ -347,6 +347,59 @@ def ingest_with_text(filepath, text, request: gr.Request):
     return
 
 
+def ingest_pdf(filepath, request: gr.Request):
+    yield (
+        gr.Textbox(visible=True, value="Please wait while your uploaded PDF is ingested into the database...")
+    )
+    verified_filepath = os.path.normpath(filepath)
+    if not verified_filepath.startswith(tmp_upload_folder):
+        print(f"Found malicious PDF file name!")
+        yield (
+            gr.Textbox(
+                visible=True,
+                value="Your uploaded PDF's file name has special characters that are not allowed (depends on the OS, some examples are \, /, :, and *). Please consider changing the file name.",
+            )
+        )
+        return
+    basename = os.path.basename(verified_filepath)
+    dest = os.path.join(static_dir, basename)
+    shutil.copy(verified_filepath, dest)
+    print("Done copying uploaded file to static folder.")
+    headers = {
+        # 'Content-Type': 'multipart/form-data'
+    }
+    files = {
+        "files": open(dest, "rb"),
+    }
+    response = requests.post(dataprep_ingest_addr, headers=headers, files=files)
+    print(response.status_code)
+    if response.status_code == 200:
+        response = response.json()
+        yield (gr.Textbox(visible=True, value="The PDF ingestion is done. Saving your uploaded PDF..."))
+        time.sleep(2)
+        fn_no_ext = Path(dest).stem
+        if "file_id_maps" in response and fn_no_ext in response["file_id_maps"]:
+            new_dst = os.path.join(static_dir, response["file_id_maps"][fn_no_ext])
+            print(response["file_id_maps"][fn_no_ext])
+            os.rename(dest, new_dst)
+            yield (
+                gr.Textbox(
+                    visible=True,
+                    value="Congratulations, your upload is done!\nClick the X button on the top right of the PDF upload box to upload another file.",
+                )
+            )
+            return
+    else:
+        yield (
+            gr.Textbox(
+                visible=True,
+                value=f"Something went wrong (server error: {response.status_code})!\nPlease click the X button on the top right of the PDF upload box to reupload your video.",
+            )
+        )
+        time.sleep(2)
+    return
+
+
 def hide_text(request: gr.Request):
     return gr.Textbox(visible=False)
 
@@ -356,8 +409,8 @@ def clear_text(request: gr.Request):
 
 
 with gr.Blocks() as upload_video:
-    gr.Markdown("# Ingest Your Own Video Using Generated Transcripts or Captions")
-    gr.Markdown("Use this interface to ingest your own video and generate transcripts or captions for it")
+    gr.Markdown("# Ingest Videos Using Generated Transcripts or Captions")
+    gr.Markdown("Use this interface to ingest a video and generate transcripts or captions for it")
 
     def select_upload_type(choice, request: gr.Request):
         if choice == "transcript":
@@ -391,8 +444,8 @@ with gr.Blocks() as upload_video:
         text_options_radio.change(select_upload_type, [text_options_radio], [video_upload_trans, video_upload_cap])
 
 with gr.Blocks() as upload_image:
-    gr.Markdown("# Ingest Your Own Image Using Generated or Custom Captions/Labels")
-    gr.Markdown("Use this interface to ingest your own image and generate a caption for it")
+    gr.Markdown("# Ingest Images Using Generated or Custom Captions")
+    gr.Markdown("Use this interface to ingest an image and generate a caption for it")
 
     def select_upload_type(choice, request: gr.Request):
         if choice == "gen_caption":
@@ -424,8 +477,8 @@ with gr.Blocks() as upload_image:
         text_options_radio.change(select_upload_type, [text_options_radio], [image_upload_cap, image_upload_text])
 
 with gr.Blocks() as upload_audio:
-    gr.Markdown("# Ingest Your Own Audio Using Generated Transcripts")
-    gr.Markdown("Use this interface to ingest your own audio file and generate a transcript for it")
+    gr.Markdown("# Ingest Audio Using Generated Transcripts")
+    gr.Markdown("Use this interface to ingest an audio file and generate a transcript for it")
     with gr.Row():
         with gr.Column(scale=6):
             audio_upload = gr.Audio(type="filepath")
@@ -440,17 +493,17 @@ with gr.Blocks() as upload_audio:
         audio_upload.clear(hide_text, [], [text_upload_result])
 
 with gr.Blocks() as upload_pdf:
-    gr.Markdown("# Ingest Your Own PDF")
-    gr.Markdown("Use this interface to ingest your own PDF file with text, tables, images, and graphs")
+    gr.Markdown("# Ingest PDF Files")
+    gr.Markdown("Use this interface to ingest a PDF file with text and images")
     with gr.Row():
         with gr.Column(scale=6):
-            image_upload_cap = gr.File()
+            pdf_upload = gr.File(file_types=['.pdf'], label="PDF File")
         with gr.Column(scale=3):
-            text_upload_result_cap = gr.Textbox(visible=False, interactive=False, label="Upload Status")
-        image_upload_cap.upload(
-            ingest_gen_caption, [image_upload_cap, gr.Textbox(value="PDF", visible=False)], [text_upload_result_cap]
+            pdf_upload_result = gr.Textbox(visible=False, interactive=False, label="Upload Status")
+        pdf_upload.upload(
+            ingest_pdf, [pdf_upload], [pdf_upload_result]
         )
-        image_upload_cap.clear(hide_text, [], [text_upload_result_cap])
+        pdf_upload.clear(hide_text, [], [pdf_upload_result])
 
 with gr.Blocks() as qna:
     state = gr.State(multimodalqna_conv.copy())
@@ -511,6 +564,8 @@ with gr.Blocks(css=css) as demo:
             upload_image.render()
         with gr.TabItem("Upload Audio"):
             upload_audio.render()
+        with gr.TabItem("Upload PDF"):
+            upload_pdf.render()
 
 demo.queue()
 app = gr.mount_gradio_app(app, demo, path="/")
