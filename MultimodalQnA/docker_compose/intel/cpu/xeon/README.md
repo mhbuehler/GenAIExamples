@@ -259,8 +259,15 @@ curl http://${host_ip}:7000/v1/multimodal_retrieval \
     -H "Content-Type: application/json" \
     -d "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 ```
+4. asr
 
-4. lvm-llava
+```bash
+curl ${ASR_SERVICE_ENDPOINT}     
+    -X POST     
+    -H "Content-Type: application/json"     
+    -d '{"byte_str" : "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}'
+```
+5. lvm-llava
 
 ```bash
 curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
@@ -269,7 +276,7 @@ curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
      -d '{"prompt":"Describe the image please.", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
 ```
 
-5. lvm-llava-svc
+6. lvm-llava-svc
 
 ```bash
 curl http://${host_ip}:9399/v1/lvm \
@@ -294,7 +301,7 @@ curl http://${host_ip}:9399/v1/lvm \
     -d '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
 ```
 
-6. dataprep-multimodal-redis
+7. dataprep-multimodal-redis
 
 Download a sample video, image, and audio file and create a caption
 
@@ -368,7 +375,7 @@ curl -X POST \
     ${DATAPREP_DELETE_FILE_ENDPOINT}
 ```
 
-7. MegaService
+8. MegaService
 
 ```bash
 curl http://${host_ip}:8888/v1/multimodalqna \
