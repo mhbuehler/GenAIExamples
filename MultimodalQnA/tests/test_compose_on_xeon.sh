@@ -40,6 +40,7 @@ function setup_env() {
     export LLAVA_SERVER_PORT=8399
     export LVM_ENDPOINT="http://${host_ip}:8399"
     export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
+    export MAX_IMAGES=1
     export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
     export WHISPER_MODEL="base"
     export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
@@ -208,6 +209,14 @@ function validate_microservices() {
         "lvm-llava" \
         '{"prompt":"Describe the image please.", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
 
+    echo "Evaluating lvm-llava with a list of images"
+    validate_service \
+        "http://${host_ip}:${LLAVA_SERVER_PORT}/generate" \
+        '"text":' \
+        "lvm-llava" \
+        "lvm-llava" \
+        '{"prompt":"Describe the image please.", "img_b64_str": ["iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC","iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC"]}'
+
     # lvm
     echo "Evaluating lvm-llava-svc"
     validate_service \
@@ -237,6 +246,14 @@ function validate_megaservice() {
         "multimodalqna" \
         "multimodalqna-backend-server" \
         '{"messages": "What is the revenue of Nike in 2023?"}'
+
+    echo "Validate megaservice with first query with an image"
+    validate_service \
+        "http://${host_ip}:8888/v1/multimodalqna" \
+        '"time_of_frame_ms":' \
+        "multimodalqna" \
+        "multimodalqna-backend-server" \
+        '{"messages": [{"role": "user", "content": [{"type": "text", "text": "Find a similar image"}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}]}'
 
     echo "Validate megaservice with follow-up query"
     validate_service \
