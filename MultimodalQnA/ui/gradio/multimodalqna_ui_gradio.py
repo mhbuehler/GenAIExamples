@@ -147,11 +147,11 @@ def http_bot(state, request: gr.Request):
                         print(f"video {state.video_file} does not exist in UI host!")
                         splited_video_path = None
                     state.split_video = splited_video_path
-                elif file_ext in [".jpg", ".jpeg", ".png", ".gif"]:
+                elif file_ext in [".jpg", ".jpeg", ".png", ".gif", ".pdf"]:
                     try:
                         output_image_path = make_temp_image(state.video_file, file_ext)
                     except:
-                        print(f"image {state.video_file} does not exist in UI host!")
+                        print(f"file {state.video_file} does not exist in UI host!")
                         output_image_path = None
                     state.image = output_image_path
 
