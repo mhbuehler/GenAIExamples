@@ -211,9 +211,9 @@ curl http://${host_ip}:7000/v1/multimodal_retrieval \
 4. asr
 
 ```bash
-curl ${ASR_SERVICE_ENDPOINT}     
-    -X POST     
-    -H "Content-Type: application/json"     
+curl ${ASR_SERVICE_ENDPOINT} \
+    -X POST \
+    -H "Content-Type: application/json" \
     -d '{"byte_str" : "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}'
 ```
 5. TGI LLaVA Gaudi Server
