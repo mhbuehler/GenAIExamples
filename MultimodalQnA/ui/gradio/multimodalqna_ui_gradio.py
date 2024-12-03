@@ -13,6 +13,7 @@ import uvicorn
 from conversation import multimodalqna_conv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from gradio_pdf import PDF
 from utils import build_logger, make_temp_image, moderation_msg, server_error_msg, split_video
 
 logger = build_logger("gradio_web_server", "gradio_web_server.log")
@@ -50,8 +51,10 @@ def clear_history(state, request: gr.Request):
         os.remove(state.split_video)
     if state.image and os.path.exists(state.image):
         os.remove(state.image)
+    if state.pdf and os.path.exists(state.pdf):
+        os.remove(state.pdf)
     state = multimodalqna_conv.copy()
-    return (state, state.to_gradio_chatbot(), None, None, None, None) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), None, None, None, None, None) + (disable_btn,) * 1
 
 
 def add_text(state, text, audio, request: gr.Request):
@@ -84,7 +87,7 @@ def http_bot(state, request: gr.Request):
     if state.skip_next:
         # This generate call is skipped due to invalid inputs
         path_to_sub_videos = state.get_path_to_subvideos()
-        yield (state, state.to_gradio_chatbot(), path_to_sub_videos, None) + (no_change_btn,) * 1
+        yield (state, state.to_gradio_chatbot(), path_to_sub_videos, None, None) + (no_change_btn,) * 1
         return
 
     if len(state.messages) == state.offset + 2:
@@ -109,7 +112,7 @@ def http_bot(state, request: gr.Request):
 
     state.messages[-1][-1] = "▌"
 
-    yield (state, state.to_gradio_chatbot(), state.split_video, state.image) + (disable_btn,) * 1
+    yield (state, state.to_gradio_chatbot(), state.split_video, state.image, state.pdf) + (disable_btn,) * 1
 
     try:
         response = requests.post(
@@ -147,19 +150,26 @@ def http_bot(state, request: gr.Request):
                         print(f"video {state.video_file} does not exist in UI host!")
                         splited_video_path = None
                     state.split_video = splited_video_path
-                elif file_ext in [".jpg", ".jpeg", ".png", ".gif", ".pdf"]:
+                elif file_ext in [".jpg", ".jpeg", ".png", ".gif"]:
                     try:
                         output_image_path = make_temp_image(state.video_file, file_ext)
                     except:
-                        print(f"file {state.video_file} does not exist in UI host!")
+                        print(f"image {state.video_file} does not exist in UI host!")
                         output_image_path = None
                     state.image = output_image_path
+                elif file_ext == ".pdf":
+                    try:
+                        output_pdf_path = make_temp_image(state.video_file, file_ext)
+                    except:
+                        print(f"pdf {state.video_file} does not exist in UI host!")
+                        output_pdf_path = None
+                    state.pdf = output_pdf_path
 
         else:
             raise requests.exceptions.RequestException
     except requests.exceptions.RequestException as e:
         state.messages[-1][-1] = server_error_msg
-        yield (state, state.to_gradio_chatbot(), None, None) + (enable_btn,)
+        yield (state, state.to_gradio_chatbot(), None, None, None) + (enable_btn,)
         return
 
     state.messages[-1][-1] = message
@@ -173,6 +183,7 @@ def http_bot(state, request: gr.Request):
         state.to_gradio_chatbot(),
         gr.Video(state.split_video, visible=state.split_video is not None),
         gr.Image(state.image, visible=state.image is not None),
+        PDF(state.pdf, visible=state.pdf is not None, interactive=False, starting_page=int(state.time_of_frame_ms)),
     ) + (enable_btn,) * 1
 
     logger.info(f"{state.messages[-1][-1]}")
@@ -511,6 +522,7 @@ with gr.Blocks() as qna:
         with gr.Column(scale=2):
             video = gr.Video(height=512, width=512, elem_id="video", visible=True, label="Media")
             image = gr.Image(height=512, width=512, elem_id="image", visible=False, label="Media")
+            pdf = PDF(height=512, elem_id="pdf", interactive=False, visible=False, label="Media")
         with gr.Column(scale=9):
             chatbot = gr.Chatbot(elem_id="chatbot", label="MultimodalQnA Chatbot", height=390)
             with gr.Row():
@@ -539,7 +551,7 @@ with gr.Blocks() as qna:
         [
             state,
         ],
-        [state, chatbot, textbox, audio, video, image, clear_btn],
+        [state, chatbot, textbox, audio, video, image, pdf, clear_btn],
     )
 
     submit_btn.click(
@@ -551,7 +563,7 @@ with gr.Blocks() as qna:
         [
             state,
         ],
-        [state, chatbot, video, image, clear_btn],
+        [state, chatbot, video, image, pdf, clear_btn],
     )
 with gr.Blocks(css=css) as demo:
     gr.Markdown("# MultimodalQnA")
