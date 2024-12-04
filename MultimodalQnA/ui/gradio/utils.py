@@ -184,6 +184,5 @@ def get_b64_frame_from_timestamp(video_path, timestamp_in_ms, maintain_aspect_ra
 
 def convert_audio_to_base64(audio_path):
     """Convert .wav file to base64 string"""
-    print(f"Audio path: {audio_path}")
     encoded_string = base64.b64encode(open(audio_path, "rb").read())
     return encoded_string.decode("utf-8")
