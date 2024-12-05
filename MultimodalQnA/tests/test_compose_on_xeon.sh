@@ -24,7 +24,7 @@ function build_docker_images() {
     # git clone https://github.com/opea-project/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"main"}" && cd ../
     git clone --single-branch --branch="mmqna-audio-query" https://github.com/mhbuehler/GenAIComps.git
     echo "Build all the images with --no-cache, check docker_image_build.log for details..."
-    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding-multimodal retriever-multimodal-redis lvm-llava lvm-llava-svc dataprep-multimodal-redis"
+    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding-multimodal retriever-multimodal-redis lvm-llava lvm-llava-svc dataprep-multimodal-redis whisper-service asr"
     docker compose -f build.yaml build ${service_list} --no-cache > ${LOG_PATH}/docker_image_build.log
 
     docker images && sleep 1m
@@ -265,7 +265,6 @@ function validate_megaservice() {
         "multimodalqna" \
         "multimodalqna-backend-server" \
         '{"messages": [{"role": "user", "content": [{"type": "text", "text": "hello, "}]}, {"role": "assistant", "content": "opea project! "}, {"role": "user", "content": [{"type": "text", "text": "goodbye"}]}]}'
-
 }
 
 function validate_delete {
@@ -293,8 +292,8 @@ function stop_docker() {
 function main() {
 
     setup_env
-    stop_docker
-    if [[ "$IMAGE_REPO" == "opea" ]]; then build_docker_images; fi
+    #stop_docker
+    #if [[ "$IMAGE_REPO" == "opea" ]]; then build_docker_images; fi
     start_time=$(date +%s)
     start_services
     end_time=$(date +%s)
@@ -310,8 +309,8 @@ function main() {
     echo "==== delete validated ===="
 
     delete_data
-    stop_docker
-    echo y | docker system prune
+    #stop_docker
+    #echo y | docker system prune
 
 }
 
