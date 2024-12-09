@@ -18,7 +18,6 @@ from comps.cores.proto.api_protocol import (
 from comps.cores.proto.docarray import LLMParams
 from fastapi import Request
 from fastapi.responses import JSONResponse, StreamingResponse
-StreamingResponse
 from PIL import Image
 
 MEGA_SERVICE_PORT = int(os.getenv("MEGA_SERVICE_PORT", 8888))
