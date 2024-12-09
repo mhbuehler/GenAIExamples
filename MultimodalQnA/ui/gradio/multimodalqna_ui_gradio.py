@@ -51,20 +51,21 @@ def clear_history(state, request: gr.Request):
     if state.image and os.path.exists(state.image):
         os.remove(state.image)
     state = multimodalqna_conv.copy()
-    return (state, state.to_gradio_chatbot(), None, None, None, None) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), {}, None, None, None) + (disable_btn,) * 1
 
 
 def add_text(state, text, audio, request: gr.Request):
+    text = text['text']
     logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
     if audio:
         state.audio_query_file = audio
         state.append_message(state.roles[0], "--input placeholder--")
         state.append_message(state.roles[1], None)
         state.skip_next = False
-        return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
+        return (state, state.to_gradio_chatbot(), {}, None) + (disable_btn,) * 1
     elif len(text) <= 0:
         state.skip_next = True
-        return (state, state.to_gradio_chatbot(), None, None) + (no_change_btn,) * 1
+        return (state, state.to_gradio_chatbot(), {}, None) + (no_change_btn,) * 1
 
     text = text[:2000]  # Hard cut-off
 
@@ -72,7 +73,7 @@ def add_text(state, text, audio, request: gr.Request):
     state.append_message(state.roles[1], None)
     state.skip_next = False
 
-    return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), {}, None) + (disable_btn,) * 1
 
 
 def http_bot(state, request: gr.Request):
@@ -463,10 +464,12 @@ with gr.Blocks() as qna:
             with gr.Row():
                 with gr.Column(scale=8):
                     with gr.Tabs():
-                        with gr.TabItem("Text Query"):
-                            textbox = gr.Textbox(
+                        with gr.TabItem("Text & Image Query"):
+                            textbox = gr.MultimodalTextbox(
+                                file_types=['image'],
                                 show_label=False,
                                 container=True,
+                                submit_btn=False,
                             )
                         with gr.TabItem("Audio Query"):
                             audio = gr.Audio(
