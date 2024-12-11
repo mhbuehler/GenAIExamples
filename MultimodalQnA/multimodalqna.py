@@ -299,6 +299,8 @@ class MultimodalQnAService(Gateway):
                     # for metadata storage purposes
                     decoded_audio_input = b64_types["audio"]
                 if "image" in b64_types and len(b64_types["image"]) > 0:
+                    # Format initial inputs to match TextImageDoc
+                    initial_inputs["text"] = {"text": prompt}
                     initial_inputs["image"] = {"base64_image": b64_types["image"][0]}
             else:
                 initial_inputs = {"text": messages}
