@@ -334,6 +334,7 @@ curl -X POST \
 
 8. MegaService
 
+Test the MegaService with a text query:
 ```bash
 curl http://${host_ip}:8888/v1/multimodalqna \
     -H "Content-Type: application/json" \
@@ -341,8 +342,23 @@ curl http://${host_ip}:8888/v1/multimodalqna \
     -d '{"messages": "What is the revenue of Nike in 2023?"}'
 ```
 
+Test the MegaService with an audio query:
+```bash
+curl http://${host_ip}:8888/v1/multimodalqna  \
+    -H "Content-Type: application/json"  \
+    -d '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
+```
+
+Test the MegaService with a text and image query:
 ```bash
 curl http://${host_ip}:8888/v1/multimodalqna \
-	-H "Content-Type: application/json" \
-	-d '{"messages": [{"role": "user", "content": [{"type": "text", "text": "hello, "}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}, {"role": "assistant", "content": "opea project! "}, {"role": "user", "content": "chao, "}], "max_tokens": 10}'
+    -H "Content-Type: application/json" \
+    -d  '{"messages": [{"role": "user", "content": [{"type": "text", "text": "Green bananas in a tree"}, {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/test-stuff2017/000000004248.jpg"}}]}]}'
+```
+
+Test the MegaService with a back and forth conversation between the user and assistant:
+```bash
+curl http://${host_ip}:8888/v1/multimodalqna \
+    -H "Content-Type: application/json" \
+    -d '{"messages": [{"role": "user", "content": [{"type": "text", "text": "hello, "}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}, {"role": "assistant", "content": "opea project! "}, {"role": "user", "content": "chao, "}], "max_tokens": 10}'
 ```
