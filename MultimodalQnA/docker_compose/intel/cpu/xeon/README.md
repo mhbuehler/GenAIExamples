@@ -409,6 +409,12 @@ curl http://${host_ip}:8888/v1/multimodalqna \
 
 Test the MegaService with a back and forth conversation between the user and assistant:
 ```bash
+curl http://${host_ip}:8888/v1/multimodalqna  \
+    -H "Content-Type: application/json"  \
+    -d '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
+```
+
+```bash
 curl http://${host_ip}:8888/v1/multimodalqna \
     -H "Content-Type: application/json" \
     -d '{"messages": [{"role": "user", "content": [{"type": "text", "text": "hello, "}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}, {"role": "assistant", "content": "opea project! "}, {"role": "user", "content": "chao, "}], "max_tokens": 10}'

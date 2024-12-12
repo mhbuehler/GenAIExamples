@@ -157,14 +157,18 @@ class MultimodalQnAService(Gateway):
                 for role, message in messages_dict.items():
                     if isinstance(message, tuple):
                         text, decoded_audio_input, image_list = message
+<<<<<<< HEAD
                         # Remove empty items from the image list
                         image_list = [x for x in image_list if x]
                         # Add image indicators within the conversation
                         image_tags = "<image>\n" * len(image_list)
+=======
+>>>>>>> c760cac2f4f6b61fba9d1b1a3020a2aa2f13b58f
                         if i == 0:
                             # do not add role for the very first message.
                             # this will be added by llava_server
                             if text:
+<<<<<<< HEAD
                                 prompt += image_tags + text + "\n"
                             elif decoded_audio_input:
                                 prompt += image_tags + decoded_audio_input + "\n"
@@ -192,6 +196,18 @@ class MultimodalQnAService(Gateway):
                             # Bytes
                             else:
                                 img_b64_str = img
+=======
+                                prompt += text + "\n"
+                            elif decoded_audio_input:
+                                prompt += decoded_audio_input + "\n"
+                        else:
+                            if text:
+                                prompt += role.upper() + ": " + text + "\n"
+                            elif decoded_audio_input:
+                                prompt += role.upper() + ": " + decoded_audio_input + "\n"
+                            else:
+                                prompt += role.upper() + ":"
+>>>>>>> c760cac2f4f6b61fba9d1b1a3020a2aa2f13b58f
 
                         if image_list:
                             for img in image_list:
@@ -224,7 +240,11 @@ class MultimodalQnAService(Gateway):
                             if message:
                                 prompt += role_label_dict[role] + " " + message + "\n"
                             else:
+<<<<<<< HEAD
                                 prompt += role_label_dict[role]
+=======
+                                prompt += role.upper() + ":"
+>>>>>>> c760cac2f4f6b61fba9d1b1a3020a2aa2f13b58f
 
         if images:
             b64_types["image"] = images
@@ -270,6 +290,10 @@ class MultimodalQnAService(Gateway):
             print("[ MultimodalQnAService ] stream=True not used, this has not support streaming yet!")
             stream_opt = False
         chat_request = ChatCompletionRequest.model_validate(data)
+<<<<<<< HEAD
+=======
+        # Multimodal RAG QnA With Videos has not yet accepts image as input during QnA.
+>>>>>>> c760cac2f4f6b61fba9d1b1a3020a2aa2f13b58f
         num_messages = len(data["messages"]) if isinstance(data["messages"], list) else 1
         messages = self._handle_message(chat_request.messages)
         decoded_audio_input = ""
@@ -283,7 +307,11 @@ class MultimodalQnAService(Gateway):
                     # for metadata storage purposes
                     decoded_audio_input = b64_types["audio"]
                 if "image" in b64_types:
+<<<<<<< HEAD
                     initial_inputs = {"prompt": prompt, "image": b64_types["image"]}
+=======
+                    initial_inputs = {"prompt": prompt, "image": b64_types["image"][0]}
+>>>>>>> c760cac2f4f6b61fba9d1b1a3020a2aa2f13b58f
                 else:
                     initial_inputs = {"prompt": prompt, "image": ""}
             else:
@@ -294,6 +322,7 @@ class MultimodalQnAService(Gateway):
             cur_megaservice = self.megaservice
             if isinstance(messages, tuple):
                 prompt, b64_types = messages
+<<<<<<< HEAD
                 initial_inputs = {"text": prompt}
                 if "audio" in b64_types:
                     # for metadata storage purposes
@@ -304,6 +333,14 @@ class MultimodalQnAService(Gateway):
                     initial_inputs["image"] = {"base64_image": b64_types["image"][0]}
             else:
                 initial_inputs = {"text": messages}
+=======
+                if "audio" in b64_types:
+                    # for metadata storage purposes
+                    decoded_audio_input = b64_types["audio"]
+            else:
+                prompt = messages
+            initial_inputs = {"text": prompt}
+>>>>>>> c760cac2f4f6b61fba9d1b1a3020a2aa2f13b58f
 
         parameters = LLMParams(
             max_new_tokens=chat_request.max_tokens if chat_request.max_tokens else 1024,
