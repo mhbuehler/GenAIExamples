@@ -54,7 +54,10 @@ def clear_history(state, request: gr.Request):
     if state.pdf and os.path.exists(state.pdf):
         os.remove(state.pdf)
     state = multimodalqna_conv.copy()
-    return (state, state.to_gradio_chatbot(), None, None, None, None, None) + (disable_btn,) * 1
+    video = gr.Video(height=512, width=512, elem_id="video", visible=True, label="Media")
+    image = gr.Image(height=512, width=512, elem_id="image", visible=False, label="Media")
+    pdf = PDF(height=512, elem_id="pdf", interactive=False, visible=False, label="Media")
+    return (state, state.to_gradio_chatbot(), None, None, video, image, pdf) + (disable_btn,) * 1
 
 
 def add_text(state, text, audio, request: gr.Request):
@@ -508,13 +511,12 @@ with gr.Blocks() as upload_pdf:
     gr.Markdown("Use this interface to ingest a PDF file with text and images")
     with gr.Row():
         with gr.Column(scale=6):
-            pdf_upload = gr.File(file_types=['.pdf'], label="PDF File")
+            pdf_upload = PDF(label="PDF File")
         with gr.Column(scale=3):
             pdf_upload_result = gr.Textbox(visible=False, interactive=False, label="Upload Status")
         pdf_upload.upload(
             ingest_pdf, [pdf_upload], [pdf_upload_result]
         )
-        pdf_upload.clear(hide_text, [], [pdf_upload_result])
 
 with gr.Blocks() as qna:
     state = gr.State(multimodalqna_conv.copy())
