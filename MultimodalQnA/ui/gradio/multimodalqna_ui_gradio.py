@@ -51,10 +51,17 @@ def clear_history(state, request: gr.Request):
     if state.image and os.path.exists(state.image):
         os.remove(state.image)
     state = multimodalqna_conv.copy()
-    return (state, state.to_gradio_chatbot(), None, None, None, None) + (disable_btn,) * 1
+    (state, state.to_gradio_chatbot(), {}, None, None, None) + (disable_btn,) * 1
 
 
-def add_text(state, text, audio, request: gr.Request):
+def add_text(state, textbox, audio, request: gr.Request):
+    # print(f"text: {text}")
+    # image_file = None
+    # if text['files']:
+    #     image_file = text['files'][0]
+    # text = text['text']
+    text = textbox['text']
+    print(textbox)
     logger.info(f"add_text. ip: {request.client.host}. len: {len(text)}")
     if audio:
         state.audio_query_file = audio
@@ -62,9 +69,16 @@ def add_text(state, text, audio, request: gr.Request):
         state.append_message(state.roles[1], None)
         state.skip_next = False
         return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
+    elif textbox['files']:
+        print(f"textbox files[0]: {textbox['files'][0]}")
+        state.image_query_file = textbox['files'][0]
+        state.append_message(state.roles[0], text)
+        state.append_message(state.roles[1], None)
+        print(f"state: {state}")
+        return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
     elif len(text) <= 0:
         state.skip_next = True
-        return (state, state.to_gradio_chatbot(), None, None) + (no_change_btn,) * 1
+        return (state, state.to_gradio_chatbot(), {}, None) + (no_change_btn,) * 1
 
     text = text[:2000]  # Hard cut-off
 
@@ -72,10 +86,11 @@ def add_text(state, text, audio, request: gr.Request):
     state.append_message(state.roles[1], None)
     state.skip_next = False
 
-    return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), {}, None) + (disable_btn,) * 1
 
 
 def http_bot(state, request: gr.Request):
+    print(f"state inside http_bot: {state}")
     global gateway_addr
     logger.info(f"http_bot. ip: {request.client.host}")
     url = gateway_addr
@@ -94,6 +109,7 @@ def http_bot(state, request: gr.Request):
         new_state.append_message(new_state.roles[0], state.messages[-2][1])
         new_state.append_message(new_state.roles[1], None)
         new_state.audio_query_file = state.audio_query_file
+        new_state.image_query_file = state.image_query_file
         state = new_state
 
     # Construct prompt
@@ -464,9 +480,11 @@ with gr.Blocks() as qna:
                 with gr.Column(scale=8):
                     with gr.Tabs():
                         with gr.TabItem("Text Query"):
-                            textbox = gr.Textbox(
+                            textbox = gr.MultimodalTextbox(
                                 show_label=False,
                                 container=True,
+                                submit_btn=False,
+                                file_types=['image']
                             )
                         with gr.TabItem("Audio Query"):
                             audio = gr.Audio(

@@ -5,7 +5,7 @@ import dataclasses
 from enum import Enum, auto
 from typing import List
 
-from utils import convert_audio_to_base64, get_b64_frame_from_timestamp
+from utils import convert_audio_to_base64, convert_img_to_base64, convert_image_to_base64, get_b64_frame_from_timestamp
 
 
 class SeparatorStyle(Enum):
@@ -32,6 +32,7 @@ class Conversation:
     split_video: str = None
     image: str = None
     audio_query_file: str = None
+    image_query_file: str = None
 
     def _template_caption(self):
         out = ""
@@ -42,11 +43,19 @@ class Conversation:
     def get_prompt(self):
         messages = self.messages
         if len(messages) > 1 and messages[1][1] is None:
+            print("RAGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
             # Need to do RAG. If the query is text, prompt is the query only
+            print(f"self.image_query_file: {self.image_query_file}")
             if self.audio_query_file:
                 ret = [{"role": "user", "content": [{"type": "audio", "audio": self.get_b64_audio_query()}]}]
+            elif self.image_query_file:
+                print(f"Given image: {self.image_query_file}")
+                ret = [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": get_b64_frame_from_timestamp(self.image_query_file, 0)}}]}]
             else:
+                print(f"last else")
                 ret = messages[0][1]
+                
+            print(f"ret: {ret}")
         else:
             # No need to do RAG. Thus, prompt of chatcompletion format
             conv_dict = []
@@ -56,6 +65,8 @@ class Conversation:
                         dic = {"role": role}
                         if self.audio_query_file:
                             content = [{"type": "audio", "audio": self.get_b64_audio_query()}]
+                        elif self.image:
+                            content = [{"type": "image_url", "image_url": {"url": self.image_query_file}}]
                         else:
                             content = [{"type": "text", "text": message}]
                         if i == 0 and self.time_of_frame_ms and self.video_file:

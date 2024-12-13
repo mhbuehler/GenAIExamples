@@ -2,13 +2,13 @@
 
 # Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-pushd "../../../../../" > /dev/null
-source .set_env.sh
-popd > /dev/null
+# pushd "../../../../../" > /dev/null
+# source .set_env.sh
+# popd > /dev/null
 
-export no_proxy=${your_no_proxy}
-export http_proxy=${your_http_proxy}
-export https_proxy=${your_http_proxy}
+export no_proxy=${no_proxy},${host_ip}
+# export http_proxy=${your_http_proxy}
+# export https_proxy=${your_http_proxy}
 export EMBEDDER_PORT=6006
 export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMBEDDER_PORT/v1/encode"
 export MM_EMBEDDING_PORT_MICROSERVICE=6000
@@ -22,7 +22,7 @@ export LLAVA_SERVER_PORT=8399
 export LVM_ENDPOINT="http://${host_ip}:8399"
 export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
 export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
-export MAX_IMAGES=1
+export MAX_IMAGES=3
 export WHISPER_MODEL="base"
 export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
 export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}

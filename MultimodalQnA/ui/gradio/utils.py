@@ -186,3 +186,8 @@ def convert_audio_to_base64(audio_path):
     """Convert .wav file to base64 string."""
     encoded_string = base64.b64encode(open(audio_path, "rb").read())
     return encoded_string.decode("utf-8")
+
+def convert_image_to_base64(image_path):
+    """Convert .jpg file to base64 string"""
+    encoded_string = base64.b64encode(open(image_path, "rb").read())
+    return encoded_string.decode("utf-8")
