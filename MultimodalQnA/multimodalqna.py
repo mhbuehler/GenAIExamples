@@ -20,17 +20,17 @@ from fastapi import Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from PIL import Image
 
-MEGA_SERVICE_PORT = int(os.getenv("MEGA_SERVICE_PORT", 8888))
+MEGA_SERVICE_PORT = int(os.getenv("MEGASSERVICE_PORT", 8888))
 MM_EMBEDDING_SERVICE_HOST_IP = os.getenv("MM_EMBEDDING_SERVICE_HOST_IP", "0.0.0.0")
 MM_EMBEDDING_PORT_MICROSERVICE = int(os.getenv("MM_EMBEDDING_PORT_MICROSERVICE", 6000))
 MM_RETRIEVER_SERVICE_HOST_IP = os.getenv("MM_RETRIEVER_SERVICE_HOST_IP", "0.0.0.0")
 MM_RETRIEVER_SERVICE_PORT = int(os.getenv("MM_RETRIEVER_SERVICE_PORT", 7000))
 LVM_SERVICE_HOST_IP = os.getenv("LVM_SERVICE_HOST_IP", "0.0.0.0")
-LVM_SERVICE_PORT = int(os.getenv("LVM_SERVICE_PORT", 9399))
+LVM_SERVICE_PORT = int(os.getenv("LVM_PORT", 9399))
 
 
 class MultimodalQnAService(Gateway):
-    asr_port = int(os.getenv("ASR_SERVICE_PORT", 3001))
+    asr_port = int(os.getenv("ASR_SERVICE_PORT"))
     asr_endpoint = os.getenv("ASR_SERVICE_ENDPOINT", "http://0.0.0.0:{}/v1/audio/transcriptions".format(asr_port))
 
     def __init__(self, host="0.0.0.0", port=8000):
