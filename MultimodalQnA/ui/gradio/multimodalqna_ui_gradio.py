@@ -524,15 +524,15 @@ if __name__ == "__main__":
     parser.add_argument("--concurrency-count", type=int, default=20)
     parser.add_argument("--share", action="store_true")
 
-    backend_service_endpoint = os.getenv("BACKEND_SERVICE_ENDPOINT", "http://localhost:8888/v1/multimodalqna")
+    backend_service_endpoint = os.getenv("BACKEND_SERVICE_ENDPOINT", "http://localhost:${MEGASERVICE_PORT}/v1/multimodalqna")
     dataprep_ingest_endpoint = os.getenv(
-        "DATAPREP_INGEST_SERVICE_ENDPOINT", "http://localhost:6007/v1/ingest_with_text"
+        "DATAPREP_INGEST_SERVICE_ENDPOINT", "http://localhost:${DATAPREP_MMR_PORT}/v1/ingest_with_text"
     )
     dataprep_gen_transcript_endpoint = os.getenv(
-        "DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT", "http://localhost:6007/v1/generate_transcripts"
+        "DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT", "http://localhost:${DATAPREP_MMR_PORT}/v1/generate_transcripts"
     )
     dataprep_gen_caption_endpoint = os.getenv(
-        "DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT", "http://localhost:6007/v1/generate_captions"
+        "DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT", "http://localhost:${DATAPREP_MMR_PORT}/v1/generate_captions"
     )
     args = parser.parse_args()
     logger.info(f"args: {args}")

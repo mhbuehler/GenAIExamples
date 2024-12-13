@@ -30,7 +30,7 @@ export REDIS_URL="redis://${host_ip}:${REDIS_DB_PORT}"
 export REDIS_HOST=${host_ip}
 export INDEX_NAME="mm-rag-redis"
 
-export DATRAPREP_MMR_PORT=6007
+export DATAPREP_MMR_PORT=6007
 export DATAPREP_INGEST_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/ingest_with_text"
 export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/generate_transcripts"
 export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/generate_captions"

@@ -30,7 +30,7 @@ export ASR_PORT=9099
 export ASR_SERVICE_PORT=3001
 export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
 
-export DATRAPREP_MMR_PORT=6007
+export DATAPREP_MMR_PORT=6007
 export DATAPREP_INGEST_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/ingest_with_text"
 export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/generate_transcripts"
 export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/generate_captions"
