@@ -136,9 +136,9 @@ def http_bot(state, request: gr.Request):
             url,
             headers=headers,
             json=pload,
-            timeout=100,
+            timeout=150,
         )
-        logger.info(response.status_code)
+        logger.info(f"Status code: {response.status_code}")
         if logflag:
             logger.info(response.json())
 
@@ -179,6 +179,7 @@ def http_bot(state, request: gr.Request):
             raise requests.exceptions.RequestException
     except requests.exceptions.RequestException as e:
         state.messages[-1][-1] = server_error_msg
+        print(f"Request Exception, e: {e}")
         yield (state, state.to_gradio_chatbot(), None, None) + (enable_btn,)
         return
 
