@@ -51,7 +51,7 @@ def clear_history(state, request: gr.Request):
     if state.image and os.path.exists(state.image):
         os.remove(state.image)
     state = multimodalqna_conv.copy()
-    (state, state.to_gradio_chatbot(), {}, None, None, None) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), {}, None, None, None) + (disable_btn,) * 1
 
 
 def add_text(state, textbox, audio, request: gr.Request):
