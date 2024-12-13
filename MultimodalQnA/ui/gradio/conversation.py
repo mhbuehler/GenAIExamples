@@ -44,18 +44,21 @@ class Conversation:
         messages = self.messages
         if len(messages) > 1 and messages[1][1] is None:
             print("RAGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
+            print(f"smessages: {messages}")
             # Need to do RAG. If the query is text, prompt is the query only
             print(f"self.image_query_file: {self.image_query_file}")
             if self.audio_query_file:
                 ret = [{"role": "user", "content": [{"type": "audio", "audio": self.get_b64_audio_query()}]}]
             elif self.image_query_file:
                 print(f"Given image: {self.image_query_file}")
-                ret = [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": get_b64_frame_from_timestamp(self.image_query_file, 0)}}]}]
+                b64_image = get_b64_frame_from_timestamp(self.image_query_file, 0)
+                ret = [{"role": "user", "content": [{"type": "text", "text": self.messages[0][1]},{"type": "image_url", "image_url": {"url": b64_image}}]}]
+                # ret = [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": b64_image}}]}]
             else:
                 print(f"last else")
                 ret = messages[0][1]
                 
-            print(f"ret: {ret}")
+            # print(f"ret: {ret}")
         else:
             # No need to do RAG. Thus, prompt of chatcompletion format
             conv_dict = []

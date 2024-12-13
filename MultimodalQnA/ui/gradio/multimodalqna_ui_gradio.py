@@ -74,6 +74,7 @@ def add_text(state, textbox, audio, request: gr.Request):
         state.image_query_file = textbox['files'][0]
         state.append_message(state.roles[0], text)
         state.append_message(state.roles[1], None)
+        state.skip_next = False
         print(f"state: {state}")
         return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
     elif len(text) <= 0:
@@ -114,13 +115,16 @@ def http_bot(state, request: gr.Request):
 
     # Construct prompt
     prompt = state.get_prompt()
+    
+    # print(f"prompt = {prompt}")
 
     # Make requests
     pload = {
         "messages": prompt,
     }
 
-    logger.info(f"==== request ====\n{pload}")
+    # print(f'pload: {pload}')
+    logger.info(f"==== request pload ====\n{pload}")
     logger.info(f"==== url request ====\n{gateway_addr}")
 
     state.messages[-1][-1] = "▌"
