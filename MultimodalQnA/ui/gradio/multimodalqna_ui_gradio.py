@@ -124,7 +124,7 @@ def http_bot(state, request: gr.Request):
     }
 
     # print(f'pload: {pload}')
-    logger.info(f"==== request pload ====\n{pload}")
+    # logger.info(f"==== request pload ====\n{pload}")
     logger.info(f"==== url request ====\n{gateway_addr}")
 
     state.messages[-1][-1] = "▌"

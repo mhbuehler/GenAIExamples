@@ -4,6 +4,7 @@
 import dataclasses
 from enum import Enum, auto
 from typing import List
+from PIL import Image
 
 from utils import convert_audio_to_base64, convert_img_to_base64, convert_image_to_base64, get_b64_frame_from_timestamp
 
@@ -44,7 +45,7 @@ class Conversation:
         messages = self.messages
         if len(messages) > 1 and messages[1][1] is None:
             print("RAGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
-            print(f"smessages: {messages}")
+            print(f"messages: {messages}")
             # Need to do RAG. If the query is text, prompt is the query only
             print(f"self.image_query_file: {self.image_query_file}")
             if self.audio_query_file:
@@ -131,6 +132,29 @@ class Conversation:
                     img_str = f'<img src="data:image/png;base64,{img_b64_str}" alt="user upload image" />'
                     msg = img_str + msg.replace("<image>", "").strip()
                     ret.append([msg, None])
+                elif self.image_query_file:
+                    import base64
+                    from io import BytesIO
+                    
+                    image = Image.open(self.image_query_file)
+                    max_hw, min_hw = max(image.size), min(image.size)
+                    aspect_ratio = max_hw / min_hw
+                    max_len, min_len = 800, 400
+                    shortest_edge = int(min(max_len / aspect_ratio, min_len, min_hw))
+                    longest_edge = int(shortest_edge * aspect_ratio)
+                    W, H = image.size
+                    if H > W:
+                        H, W = longest_edge, shortest_edge
+                    else:
+                        H, W = shortest_edge, longest_edge
+                    image = image.resize((W, H))
+                    buffered = BytesIO()
+                    image.save(buffered, format="JPEG")
+                    img_b64_str = base64.b64encode(buffered.getvalue()).decode()
+                    img_str = f'<img src="data:image/png;base64,{img_b64_str}" alt="user upload image" />'
+                    msg = img_str + msg.replace("<image>", "").strip()
+                    ret.append([msg, None])
+                    
                 else:
                     ret.append([msg, None])
             else:
