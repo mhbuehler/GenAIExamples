@@ -149,6 +149,8 @@ class Conversation:
                         H, W = shortest_edge, longest_edge
                     image = image.resize((W, H))
                     buffered = BytesIO()
+                    if image.format not in ['JPEG', 'JPG']:
+                        image = image.convert('RGB')
                     image.save(buffered, format="JPEG")
                     img_b64_str = base64.b64encode(buffered.getvalue()).decode()
                     img_str = f'<img src="data:image/png;base64,{img_b64_str}" alt="user upload image" />'
