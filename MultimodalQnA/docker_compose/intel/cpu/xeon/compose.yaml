@@ -125,7 +125,7 @@ services:
       - lvm-llava-svc
       - asr
     ports:
-      - "${MEGASERVICE_PORT}:${${MEGASERVICE_PORT}}"
+      - "${MEGASERVICE_PORT}:${MEGASERVICE_PORT}"
     environment:
       no_proxy: ${no_proxy}
       https_proxy: ${https_proxy}
