@@ -288,7 +288,7 @@ class MultimodalQnAService(Gateway):
             else:
                 initial_inputs = {"text": messages}
             
-            print(f"initial_inputs: {initial_inputs}")
+            # print(f"initial_inputs: {initial_inputs}")
 
         parameters = LLMParams(
             max_new_tokens=chat_request.max_tokens if chat_request.max_tokens else 1024,

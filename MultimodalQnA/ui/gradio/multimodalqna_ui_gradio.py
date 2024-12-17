@@ -71,7 +71,10 @@ def add_text(state, textbox, audio, request: gr.Request):
         return (state, state.to_gradio_chatbot(), None, None) + (disable_btn,) * 1
     elif textbox['files']:
         print(f"textbox files[0]: {textbox['files'][0]}")
-        state.image_query_file = textbox['files'][0]
+        image_file = textbox['files'][0]
+        state.image_query_file = image_file
+        # state.image_query_files.append(image_file)
+        state.image_query_files[len(state.messages)] = image_file
         state.append_message(state.roles[0], text)
         state.append_message(state.roles[1], None)
         state.skip_next = False
@@ -111,6 +114,7 @@ def http_bot(state, request: gr.Request):
         new_state.append_message(new_state.roles[1], None)
         new_state.audio_query_file = state.audio_query_file
         new_state.image_query_file = state.image_query_file
+        new_state.image_query_files = state.image_query_files
         state = new_state
 
     # Construct prompt
@@ -136,7 +140,6 @@ def http_bot(state, request: gr.Request):
             url,
             headers=headers,
             json=pload,
-            timeout=150,
         )
         logger.info(f"Status code: {response.status_code}")
         if logflag:

@@ -3,7 +3,7 @@
 
 import dataclasses
 from enum import Enum, auto
-from typing import List
+from typing import List, Dict
 from PIL import Image
 
 from utils import convert_audio_to_base64, convert_img_to_base64, convert_image_to_base64, get_b64_frame_from_timestamp
@@ -22,6 +22,7 @@ class Conversation:
     system: str
     roles: List[str]
     messages: List[List[str]]
+    image_query_files: Dict[int, str]
     offset: int
     sep_style: SeparatorStyle = SeparatorStyle.SINGLE
     sep: str = "\n"
@@ -108,6 +109,7 @@ class Conversation:
 
     def to_gradio_chatbot(self):
         ret = []
+        print(f'state inside to_gradio_chatbot: {self}')
         for i, (role, msg) in enumerate(self.messages[self.offset :]):
             if i % 2 == 0:
                 if type(msg) is tuple:
@@ -136,7 +138,7 @@ class Conversation:
                     import base64
                     from io import BytesIO
                     
-                    image = Image.open(self.image_query_file)
+                    image = Image.open(self.image_query_files[i])
                     max_hw, min_hw = max(image.size), min(image.size)
                     aspect_ratio = max_hw / min_hw
                     max_len, min_len = 800, 400
@@ -168,6 +170,7 @@ class Conversation:
             system=self.system,
             roles=self.roles,
             messages=[[x, y] for x, y in self.messages],
+            image_query_files=self.image_query_files,
             offset=self.offset,
             sep_style=self.sep_style,
             sep=self.sep,
@@ -197,6 +200,7 @@ multimodalqna_conv = Conversation(
     system="",
     roles=("user", "assistant"),
     messages=(),
+    image_query_files={},
     offset=0,
     sep_style=SeparatorStyle.SINGLE,
     sep="\n",
