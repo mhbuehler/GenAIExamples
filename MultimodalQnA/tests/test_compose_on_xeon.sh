@@ -62,8 +62,8 @@ function setup_env() {
     export LLAVA_SERVER_PORT=8399
     export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
     export LVM_ENDPOINT="http://${host_ip}:$LLAVA_SERVER_PORT"
-    export MEGASERVICE_PORT=8888
-    export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:$MEGASERVICE_PORT/v1/multimodalqna"
+    export MEGA_SERVICE_PORT=8888
+    export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna"
     export UI_PORT=5173
     echo "Done running setup env."
 
@@ -251,7 +251,7 @@ function validate_megaservice() {
     # Curl the Mega Service with retrieval
     echo "Validate megaservice with first query"
     validate_service \
-        "http://${host_ip}:$MEGASERVICE_PORT/v1/multimodalqna" \
+        "http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna" \
         '"time_of_frame_ms":' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
@@ -259,7 +259,7 @@ function validate_megaservice() {
 
     echo "Validate megaservice with first audio query"
     validate_service \
-        "http://${host_ip}:$MEGASERVICE_PORT/v1/multimodalqna" \
+        "http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna" \
         '"time_of_frame_ms":' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
@@ -267,7 +267,7 @@ function validate_megaservice() {
 
     echo "Validate megaservice with follow-up query"
     validate_service \
-        "http://${host_ip}:$MEGASERVICE_PORT/v1/multimodalqna" \
+        "http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna" \
         '"content":"' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
@@ -275,7 +275,7 @@ function validate_megaservice() {
 
     echo "Validate megaservice with multiple text queries"
     validate_service \
-        "http://${host_ip}:$MEGASERVICE_PORT/v1/multimodalqna" \
+        "http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna" \
         '"content":"' \
         "multimodalqna" \
         "multimodalqna-backend-server" \

@@ -30,7 +30,7 @@ LVM_SERVICE_PORT = int(os.getenv("LVM_PORT", 9399))
 
 
 class MultimodalQnAService(Gateway):
-    asr_port = int(os.getenv("ASR_SERVICE_PORT"), 3001)
+    asr_port = int(os.getenv("ASR_SERVICE_PORT", 3001))
     asr_endpoint = os.getenv("ASR_SERVICE_ENDPOINT", "http://0.0.0.0:{}/v1/audio/transcriptions".format(asr_port))
 
     def __init__(self, host="0.0.0.0", port=8000):
