@@ -170,14 +170,14 @@ docker compose -f compose.yaml up -d
 1. embedding-multimodal-bridgetower
 
 ```bash
-curl http://${host_ip}:${EMBEDDER_PORT}/v1/encode \
+curl http://${host_ip}:${EMM_BRIDGETOWER_PORT}/v1/encode \
      -X POST \
      -H "Content-Type:application/json" \
      -d '{"text":"This is example"}'
 ```
 
 ```bash
-curl http://${host_ip}:${EMBEDDER_PORT}/v1/encode \
+curl http://${host_ip}:${EMM_BRIDGETOWER_PORT}/v1/encode \
      -X POST \
      -H "Content-Type:application/json" \
      -d '{"text":"This is example", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
@@ -230,14 +230,14 @@ curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
 6. lvm-tgi
 
 ```bash
-curl http://${host_ip}:9399/v1/lvm \
+curl http://${host_ip}:${LVM_PORT}/v1/lvm \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [{"b64_img_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "transcript_for_inference": "yellow image", "video_id": "8c7461df-b373-4a00-8696-9a2234359fe0", "time_of_frame_ms":"37000000", "source_video":"WeAreGoingOnBullrun_8c7461df-b373-4a00-8696-9a2234359fe0.mp4"}], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
 ```
 
 ```bash
-curl http://${host_ip}:9399/v1/lvm  \
+curl http://${host_ip}:${LVM_PORT}/v1/lvm  \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"image": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "prompt":"What is this?"}'
@@ -246,7 +246,7 @@ curl http://${host_ip}:9399/v1/lvm  \
 Also, validate LVM TGI Gaudi Server with empty retrieval results
 
 ```bash
-curl http://${host_ip}:9399/v1/lvm \
+curl http://${host_ip}:${LVM_PORT}/v1/lvm \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
@@ -329,14 +329,14 @@ curl -X POST \
 8. MegaService
 
 ```bash
-curl http://${host_ip}:8888/v1/multimodalqna \
+curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna \
     -H "Content-Type: application/json" \
     -X POST \
     -d '{"messages": "What is the revenue of Nike in 2023?"}'
 ```
 
 ```bash
-curl http://${host_ip}:8888/v1/multimodalqna \
+curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna \
 	-H "Content-Type: application/json" \
 	-d '{"messages": [{"role": "user", "content": [{"type": "text", "text": "hello, "}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}, {"role": "assistant", "content": "opea project! "}, {"role": "user", "content": "chao, "}], "max_tokens": 10}'
 ```

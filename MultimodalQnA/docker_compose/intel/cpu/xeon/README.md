@@ -103,8 +103,8 @@ export LVM_PORT=9399
 export LLAVA_SERVER_PORT=8399
 export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
 export LVM_ENDPOINT="http://${host_ip}:$LLAVA_SERVER_PORT"
-export MEGASERVICE_PORT=8888
-export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:$MEGASERVICE_PORT/v1/multimodalqna"
+export MEGA_SERVICE_PORT=8888
+export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna"
 export UI_PORT=5173
 ```
 
@@ -119,7 +119,7 @@ Build embedding-multimodal-bridgetower docker image
 ```bash
 git clone https://github.com/opea-project/GenAIComps.git
 cd GenAIComps
-docker build --no-cache -t opea/embedding-multimodal-bridgetower:latest --build-arg EMBEDDER_PORT=$EMBEDDER_PORT --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/embeddings/multimodal/bridgetower/Dockerfile .
+docker build --no-cache -t opea/embedding-multimodal-bridgetower:latest --build-arg EMM_BRIDGETOWER_PORT=$EMM_BRIDGETOWER_PORT --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/embeddings/multimodal/bridgetower/Dockerfile .
 ```
 
 Build embedding-multimodal microservice image
@@ -228,14 +228,14 @@ docker compose -f compose.yaml up -d
 1. embedding-multimodal-bridgetower
 
 ```bash
-curl http://${host_ip}:${EMBEDDER_PORT}/v1/encode \
+curl http://${host_ip}:${EMM_BRIDGETOWER_PORT}/v1/encode \
      -X POST \
      -H "Content-Type:application/json" \
      -d '{"text":"This is example"}'
 ```
 
 ```bash
-curl http://${host_ip}:${EMBEDDER_PORT}/v1/encode \
+curl http://${host_ip}:${EMM_BRIDGETOWER_PORT}/v1/encode \
      -X POST \
      -H "Content-Type:application/json" \
      -d '{"text":"This is example", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
@@ -261,7 +261,7 @@ curl http://${host_ip}:$MM_EMBEDDING_PORT_MICROSERVICE/v1/embeddings \
 
 ```bash
 export your_embedding=$(python3 -c "import random; embedding = [random.uniform(-1, 1) for _ in range(512)]; print(embedding)")
-curl http://${host_ip}:7000/v1/multimodal_retrieval \
+curl http://${host_ip}:$REDIS_RETRIEVER_PORT/v1/multimodal_retrieval \
     -X POST \
     -H "Content-Type: application/json" \
     -d "{\"text\":\"test\",\"embedding\":${your_embedding}}"
@@ -288,14 +288,14 @@ curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
 6. lvm-llava-svc
 
 ```bash
-curl http://${host_ip}:9399/v1/lvm \
+curl http://${host_ip}:${LVM_PORT}/v1/lvm \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [{"b64_img_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "transcript_for_inference": "yellow image", "video_id": "8c7461df-b373-4a00-8696-9a2234359fe0", "time_of_frame_ms":"37000000", "source_video":"WeAreGoingOnBullrun_8c7461df-b373-4a00-8696-9a2234359fe0.mp4"}], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
 ```
 
 ```bash
-curl http://${host_ip}:9399/v1/lvm  \
+curl http://${host_ip}:${LVM_PORT}/v1/lvm  \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"image": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "prompt":"What is this?"}'
@@ -304,7 +304,7 @@ curl http://${host_ip}:9399/v1/lvm  \
 Also, validate LVM Microservice with empty retrieval results
 
 ```bash
-curl http://${host_ip}:9399/v1/lvm \
+curl http://${host_ip}:${LVM_PORT}/v1/lvm \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
@@ -387,20 +387,20 @@ curl -X POST \
 8. MegaService
 
 ```bash
-curl http://${host_ip}:8888/v1/multimodalqna \
+curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna \
     -H "Content-Type: application/json" \
     -X POST \
     -d '{"messages": "What is the revenue of Nike in 2023?"}'
 ```
 
 ```bash
-curl http://${host_ip}:8888/v1/multimodalqna  \
+curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna  \
     -H "Content-Type: application/json"  \
     -d '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
 ```
 
 ```bash
-curl http://${host_ip}:8888/v1/multimodalqna \
+curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna \
     -H "Content-Type: application/json" \
     -d '{"messages": [{"role": "user", "content": [{"type": "text", "text": "hello, "}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}, {"role": "assistant", "content": "opea project! "}, {"role": "user", "content": "chao, "}], "max_tokens": 10}'
 ```

@@ -25,17 +25,16 @@ export INDEX_NAME="mm-rag-redis"
 export WHISPER_PORT=7066
 export WHISPER_MODEL="base"
 export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
-
 export ASR_PORT=9099
 export ASR_SERVICE_PORT=3001
 export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
 
 export DATAPREP_MMR_PORT=6007
-export DATAPREP_INGEST_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/ingest_with_text"
-export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/generate_transcripts"
-export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/generate_captions"
-export DATAPREP_GET_FILE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/dataprep/get_files"
-export DATAPREP_DELETE_FILE_ENDPOINT="http://${host_ip}:${DATRAPREP_MMR_PORT}/v1/dataprep/delete_files"
+export DATAPREP_INGEST_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/ingest_with_text"
+export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/generate_transcripts"
+export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/generate_captions"
+export DATAPREP_GET_FILE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/dataprep/get_files"
+export DATAPREP_DELETE_FILE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/dataprep/delete_files"
 
 export EMM_BRIDGETOWER_PORT=6006
 export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
@@ -44,14 +43,14 @@ export MM_EMBEDDING_PORT_MICROSERVICE=6000
 
 export REDIS_RETREIEVER_PORT=7000
 
-export TGI_GAUDI_PORT="8399:80"
+export TGI_GAUDI_PORT="${LLAVA_SERVER_PORT}:80"
 
 export LVM_PORT=9399
 export LLAVA_SERVER_PORT=8399
 export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
 export LVM_ENDPOINT="http://${host_ip}:${LLAVA_SERVER_PORT}"
 
-export MEGASERVICE_PORT=8888
-export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:${MEGASERVICE_PORT}/v1/multimodalqna"
+export MEGA_SERVICE_PORT=8888
+export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna"
 
 export UI_PORT=5173
