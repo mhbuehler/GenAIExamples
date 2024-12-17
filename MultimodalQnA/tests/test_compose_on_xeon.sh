@@ -18,6 +18,24 @@ export image_fn="apple.png"
 export video_fn="WeAreGoingOnBullrun.mp4"
 export caption_fn="apple.txt"
 
+function check_service_ready() {
+    local container_name="$1"
+    local max_retries="$2"
+    local log_string="$3"
+
+    for i in $(seq 1 "$max_retries")
+    do
+        service_logs=$(docker logs "$container_name" 2>&1 | grep "$log_string" || true)
+        if [[ -z "$service_logs" ]]; then
+            echo "The $container_name service is not ready yet, sleeping 30s..."
+            sleep 30s
+        else
+            echo "$container_name service is ready"
+            break
+        fi
+    done
+}
+
 function build_docker_images() {
     cd $WORKPATH/docker_image_build
     git clone https://github.com/opea-project/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"main"}" && cd ../
@@ -200,23 +218,7 @@ function validate_microservices() {
         "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 
     echo "Wait for lvm-llava service to be ready"
-    max_retries=10
-    for i in $(seq $max_retries)
-    do
-        lvm_logs=$(docker logs lvm-llava 2>&1 | grep "Uvicorn running on http://" || true)
-        if [[ -z "$lvm_logs" ]]; then
-            echo "The lvm-llava service is not ready yet, sleeping 30s..."
-            sleep 30s
-        else
-            echo "lvm-llava service is ready"
-            break
-        fi
-    done
-
-    if [[ $i -ge 10 ]]; then
-        echo "WARNING: Max retries reached when waiting for the lvm-llava service to be ready"
-        docker logs lvm-llava >> ${LOG_PATH}/lvm_llava_file.log
-    fi
+    check_service_ready "lvm-llava" 10 "Uvicorn running on http://"
 
     # llava server
     echo "Evaluating lvm-llava"
