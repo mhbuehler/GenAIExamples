@@ -7,7 +7,7 @@ import os
 from io import BytesIO
 
 import requests
-from comps import Gateway, MegaServiceEndpoint, MicroService, ServiceOrchestrator, ServiceType
+from comps import MegaServiceEndpoint, MicroService, ServiceOrchestrator, ServiceRoleType, ServiceType
 from comps.cores.proto.api_protocol import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -29,7 +29,7 @@ LVM_SERVICE_HOST_IP = os.getenv("LVM_SERVICE_HOST_IP", "0.0.0.0")
 LVM_SERVICE_PORT = int(os.getenv("LVM_SERVICE_PORT", 9399))
 
 
-class MultimodalQnAService(Gateway):
+class MultimodalQnAService:
     asr_port = int(os.getenv("ASR_SERVICE_PORT", 3001))
     asr_endpoint = os.getenv("ASR_SERVICE_ENDPOINT", "http://0.0.0.0:{}/v1/audio/transcriptions".format(asr_port))
 
@@ -39,6 +39,7 @@ class MultimodalQnAService(Gateway):
         self._role_labels = self._get_role_labels()
         self.lvm_megaservice = ServiceOrchestrator()
         self.megaservice = ServiceOrchestrator()
+        self.endpoint = str(MegaServiceEndpoint.MULTIMODAL_QNA)
 
     def add_remote_service(self):
         mm_embedding = MicroService(
@@ -75,33 +76,6 @@ class MultimodalQnAService(Gateway):
         # for lvm megaservice
         self.lvm_megaservice.add(lvm)
 
-    def _get_role_labels(self):
-        """
-        Returns a dictionary of role labels that are used in the chat prompt based on the LVM_MODEL_ID
-        environment variable. The function defines the role labels used by the llava-1.5, llava-v1.6-vicuna,
-        llava-v1.6-mistral, and llava-interleave models, and then defaults to use "USER:" and "ASSISTANT:" if the
-        LVM_MODEL_ID is not one of those.
-        """
-        lvm_model = os.getenv("LVM_MODEL_ID", "")
-
-        # Default to labels used by llava-1.5 and llava-v1.6-vicuna models
-        role_labels = {
-            "user": "USER:",
-            "assistant": "ASSISTANT:"
-        }
-
-        if "llava-interleave" in lvm_model:
-            role_labels["user"] = "<|im_start|>user"
-            role_labels["assistant"] = "<|im_end|><|im_start|>assistant"
-        elif "llava-v1.6-mistral" in lvm_model:
-            role_labels["user"] = "[INST]"
-            role_labels["assistant"] = " [/INST]"
-        elif "llava-1.5" not in lvm_model and "llava-v1.6-vicuna" not in lvm_model:
-            print(f"[ MultimodalQnAGateway ] Using default role labels for prompt formatting: {role_labels}")
-
-        return role_labels
-
-    # this overrides _handle_message method of Gateway
     def _handle_message(self, messages):
         images = []
         audios = []
@@ -351,14 +325,17 @@ class MultimodalQnAService(Gateway):
         return ChatCompletionResponse(model="multimodalqna", choices=choices, usage=usage)
 
     def start(self):
-        super().__init__(
-            megaservice=self.megaservice,
+        self.service = MicroService(
+            self.__class__.__name__,
+            service_role=ServiceRoleType.MEGASERVICE,
             host=self.host,
             port=self.port,
-            endpoint=str(MegaServiceEndpoint.MULTIMODAL_QNA),
+            endpoint=self.endpoint,
             input_datatype=ChatCompletionRequest,
             output_datatype=ChatCompletionResponse,
         )
+        self.service.add_route(self.endpoint, self.handle_request, methods=["POST"])
+        self.service.start()
 
 
 if __name__ == "__main__":
