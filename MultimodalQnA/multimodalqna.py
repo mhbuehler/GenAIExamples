@@ -76,6 +76,33 @@ class MultimodalQnAService:
         # for lvm megaservice
         self.lvm_megaservice.add(lvm)
 
+    def _get_role_labels(self):
+        """
+        Returns a dictionary of role labels that are used in the chat prompt based on the LVM_MODEL_ID
+        environment variable. The function defines the role labels used by the llava-1.5, llava-v1.6-vicuna,
+        llava-v1.6-mistral, and llava-interleave models, and then defaults to use "USER:" and "ASSISTANT:" if the
+        LVM_MODEL_ID is not one of those.
+        """
+        lvm_model = os.getenv("LVM_MODEL_ID", "")
+
+        # Default to labels used by llava-1.5 and llava-v1.6-vicuna models
+        role_labels = {
+            "user": "USER:",
+            "assistant": "ASSISTANT:"
+        }
+
+        if "llava-interleave" in lvm_model:
+            role_labels["user"] = "<|im_start|>user"
+            role_labels["assistant"] = "<|im_end|><|im_start|>assistant"
+        elif "llava-v1.6-mistral" in lvm_model:
+            role_labels["user"] = "[INST]"
+            role_labels["assistant"] = " [/INST]"
+        elif "llava-1.5" not in lvm_model and "llava-v1.6-vicuna" not in lvm_model:
+            print(f"[ MultimodalQnAGateway ] Using default role labels for prompt formatting: {role_labels}")
+
+        return role_labels
+
+    # this overrides _handle_message method of Gateway
     def _handle_message(self, messages):
         images = []
         audios = []
@@ -261,8 +288,6 @@ class MultimodalQnAService:
                     initial_inputs["image"] = {"base64_image": b64_types["image"][0]}
             else:
                 initial_inputs = {"text": messages}
-            
-            # print(f"initial_inputs: {initial_inputs}")
 
         parameters = LLMParams(
             max_new_tokens=chat_request.max_tokens if chat_request.max_tokens else 1024,
