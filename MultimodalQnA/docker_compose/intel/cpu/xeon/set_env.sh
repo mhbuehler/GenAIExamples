@@ -12,10 +12,6 @@ export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
 export LVM_SERVICE_HOST_IP=${host_ip}
 export MEGA_SERVICE_HOST_IP=${host_ip}
 
-export no_proxy=${no_proxy}
-export http_proxy=${http_proxy}
-export https_proxy=${http_proxy}
-
 export WHISPER_PORT=7066
 export WHISPER_MODEL="base"
 export MAX_IMAGES=1

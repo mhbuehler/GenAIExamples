@@ -72,7 +72,7 @@ export your_no_proxy=${your_no_proxy},"External_Public_IP"
 ```
 
 ```bash
-export host_ip=${ip_address}
+export host_ip=$(hostname -I | awk '{print $1}')
 export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
 export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
 export LVM_SERVICE_HOST_IP=${host_ip}
@@ -267,7 +267,7 @@ curl http://${host_ip}:$MM_EMBEDDING_PORT_MICROSERVICE/v1/embeddings \
 
 ```bash
 export your_embedding=$(python3 -c "import random; embedding = [random.uniform(-1, 1) for _ in range(512)]; print(embedding)")
-curl http://${host_ip}:$REDIS_RETRIEVER_PORT/v1/multimodal_retrieval \
+curl http://${host_ip}:${REDIS_RETRIEVER_PORT}/v1/multimodal_retrieval \
     -X POST \
     -H "Content-Type: application/json" \
     -d "{\"text\":\"test\",\"embedding\":${your_embedding}}"

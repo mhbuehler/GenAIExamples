@@ -143,7 +143,7 @@ services:
       - lvm-tgi
       - asr
     ports:
-      - "${MEGASERVICE_PORT}:${MEGASERVICE_PORT}"
+      - "${MEGA_SERVICE_PORT}:${MEGA_SERVICE_PORT}"
     environment:
       no_proxy: ${no_proxy}
       https_proxy: ${https_proxy}
