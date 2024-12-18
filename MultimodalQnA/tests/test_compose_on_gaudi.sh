@@ -117,6 +117,9 @@ function validate_service() {
     elif [[ $SERVICE_NAME == *"dataprep-multimodal-redis-ingest"* ]]; then
         cd $LOG_PATH
         HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -F "files=@./${image_fn}" -F "files=@./apple.txt" -H 'Content-Type: multipart/form-data' "$URL")
+    elif [[ $SERVICE_NAME == *"dataprep-multimodal-redis-pdf"* ]]; then
+        cd $LOG_PATH
+        HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -F "files=@./${pdf_fn}" -H 'Content-Type: multipart/form-data' "$URL")
     elif [[ $SERVICE_NAME == *"dataprep_get"* ]]; then
         HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -X POST -H 'Content-Type: application/json' "$URL")
     elif [[ $SERVICE_NAME == *"dataprep_del"* ]]; then
@@ -185,18 +188,25 @@ function validate_microservices() {
     sleep 1m # retrieval can't curl as expected, try to wait for more time
 
     # test data prep
-    echo "Data Prep with Generating Transcript for Video"
+    echo "Validating Data Prep with Generating Transcript for Video"
     validate_service \
         "${DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT}" \
         "Data preparation succeeded" \
         "dataprep-multimodal-redis-transcript" \
         "dataprep-multimodal-redis"
 
-    echo "Data Prep with Image & Caption Ingestion"
+    echo "Validating Data Prep with Image & Caption Ingestion"
     validate_service \
         "${DATAPREP_INGEST_SERVICE_ENDPOINT}" \
         "Data preparation succeeded" \
         "dataprep-multimodal-redis-ingest" \
+        "dataprep-multimodal-redis"
+
+    echo "Validating Data Prep with PDF"
+    validate_service \
+        "${DATAPREP_INGEST_SERVICE_ENDPOINT}" \
+        "Data preparation succeeded" \
+        "dataprep-multimodal-redis-pdf" \
         "dataprep-multimodal-redis"
 
     echo "Validating get file returns mp4"
@@ -255,7 +265,7 @@ function validate_microservices() {
         '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [{"b64_img_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "transcript_for_inference": "yellow image", "video_id": "8c7461df-b373-4a00-8696-9a2234359fe0", "time_of_frame_ms":"37000000", "source_video":"WeAreGoingOnBullrun_8c7461df-b373-4a00-8696-9a2234359fe0.mp4"}], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
 
     # data prep requiring lvm
-    echo "Data Prep with Generating Caption for Image"
+    echo "Validating Data Prep with Generating Caption for Image"
     validate_service \
         "${DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT}" \
         "Data preparation succeeded" \
@@ -267,15 +277,15 @@ function validate_microservices() {
 
 function validate_megaservice() {
     # Curl the Mega Service with retrieval
-    echo "Validate megaservice with first query"
+    echo "Validating megaservice with first query"
     validate_service \
         "http://${host_ip}:8888/v1/multimodalqna" \
         '"time_of_frame_ms":' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
         '{"messages": "What is the revenue of Nike in 2023?"}'
-
-    echo "Validate megaservice with first audio query"
+    
+    echo "Validating megaservice with first audio query"
     validate_service \
         "http://${host_ip}:8888/v1/multimodalqna" \
         '"time_of_frame_ms":' \
@@ -283,7 +293,7 @@ function validate_megaservice() {
         "multimodalqna-backend-server" \
         '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
 
-    echo "Validate megaservice with first query with an image"
+    echo "Validating megaservice with first query with an image"
     validate_service \
         "http://${host_ip}:8888/v1/multimodalqna" \
         '"time_of_frame_ms":' \
@@ -291,7 +301,7 @@ function validate_megaservice() {
         "multimodalqna-backend-server" \
         '{"messages": [{"role": "user", "content": [{"type": "text", "text": "Find a similar image"}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}]}'
 
-    echo "Validate megaservice with follow-up query"
+    echo "Validating megaservice with follow-up query"
     validate_service \
         "http://${host_ip}:8888/v1/multimodalqna" \
         '"content":"' \
@@ -299,7 +309,7 @@ function validate_megaservice() {
         "multimodalqna-backend-server" \
         '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}, {"role": "assistant", "content": "opea project! "}, {"role": "user", "content": [{"type": "text", "text": "goodbye"}]}]}'
 
-    echo "Validate megaservice with multiple text queries"
+    echo "Validating megaservice with multiple text queries"
     validate_service \
         "http://${host_ip}:8888/v1/multimodalqna" \
         '"content":"' \
@@ -310,7 +320,7 @@ function validate_megaservice() {
 }
 
 function validate_delete {
-    echo "Validate data prep delete files"
+    echo "Validating data prep delete files"
     validate_service \
         "${DATAPREP_DELETE_FILE_ENDPOINT}" \
         '{"status":true}' \
@@ -324,6 +334,7 @@ function delete_data() {
     rm -rf ${image_fn}
     rm -rf ${video_fn}
     rm -rf ${caption_fn}
+    rm -rf ${pdf_fn}
 }
 
 function stop_docker() {
