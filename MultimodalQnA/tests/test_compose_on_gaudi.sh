@@ -34,6 +34,11 @@ function check_service_ready() {
             break
         fi
     done
+
+    if [[ $i -ge $max_retries ]]; then
+        echo "WARNING: Max retries reached when waiting for the $container_name service to be ready"
+        docker logs "$container_name" >> "${LOG_PATH}/$container_name_file.log"
+    fi
 }
 
 function build_docker_images() {
@@ -221,11 +226,6 @@ function validate_microservices() {
 
     echo "Wait for tgi-llava-gaudi-server service to be ready"
     check_service_ready "tgi-llava-gaudi-server" 10 "Connected"
-
-    if [[ $i -ge 10 ]]; then
-        echo "WARNING: Max retries reached when waiting for the lvm-llava service to be ready"
-        docker logs lvm-llava >> ${LOG_PATH}/lvm_llava_file.log
-    fi
 
     # llava server
     echo "Evaluating LLAVA tgi-gaudi"

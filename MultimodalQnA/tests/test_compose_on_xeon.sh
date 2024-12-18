@@ -34,6 +34,11 @@ function check_service_ready() {
             break
         fi
     done
+
+    if [[ $i -ge $max_retries ]]; then
+        echo "WARNING: Max retries reached when waiting for the $container_name service to be ready"
+        docker logs "$container_name" >> "${LOG_PATH}/$container_name_file.log"
+    fi
 }
 
 function build_docker_images() {
