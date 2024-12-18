@@ -18,6 +18,7 @@ export https_proxy=${http_proxy}
 
 export WHISPER_PORT=7066
 export WHISPER_MODEL="base"
+export MAX_IMAGES=1
 export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
 export ASR_PORT=9099
 export ASR_SERVICE_PORT=3001

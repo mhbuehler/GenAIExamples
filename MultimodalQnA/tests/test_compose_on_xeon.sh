@@ -18,9 +18,32 @@ export image_fn="apple.png"
 export video_fn="WeAreGoingOnBullrun.mp4"
 export caption_fn="apple.txt"
 
+function check_service_ready() {
+    local container_name="$1"
+    local max_retries="$2"
+    local log_string="$3"
+
+    for i in $(seq 1 "$max_retries")
+    do
+        service_logs=$(docker logs "$container_name" 2>&1 | grep "$log_string" || true)
+        if [[ -z "$service_logs" ]]; then
+            echo "The $container_name service is not ready yet, sleeping 30s..."
+            sleep 30s
+        else
+            echo "$container_name service is ready"
+            break
+        fi
+    done
+
+    if [[ $i -ge $max_retries ]]; then
+        echo "WARNING: Max retries reached when waiting for the $container_name service to be ready"
+        docker logs "$container_name" >> "${LOG_PATH}/$container_name_file.log"
+    fi
+}
+
 function build_docker_images() {
     cd $WORKPATH/docker_image_build
-    git clone https://github.com/opea-project/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"main"}" && cd ../
+    git clone https://github.com/mhbuehler/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"dina/image_query"}" && cd ../
     echo "Build all the images with --no-cache, check docker_image_build.log for details..."
     service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding-multimodal retriever-multimodal-redis lvm-llava lvm-llava-svc dataprep-multimodal-redis whisper asr"
     docker compose -f build.yaml build ${service_list} --no-cache > ${LOG_PATH}/docker_image_build.log
@@ -29,14 +52,13 @@ function build_docker_images() {
 }
 
 function setup_env() {
-    echo "Running setup env..."
-
     export host_ip=${ip_address}
     export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
     export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
     export LVM_SERVICE_HOST_IP=${host_ip}
     export MEGA_SERVICE_HOST_IP=${host_ip}
     export WHISPER_PORT=7066
+    export MAX_IMAGES=1
     export WHISPER_MODEL="base"
     export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
     export ASR_PORT=9099
@@ -65,8 +87,6 @@ function setup_env() {
     export MEGA_SERVICE_PORT=8888
     export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna"
     export UI_PORT=5173
-    echo "Done running setup env."
-
 }
 
 
@@ -216,7 +236,8 @@ function validate_microservices() {
         "retriever-multimodal-redis" \
         "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 
-    sleep 3m
+    echo "Wait for lvm-llava service to be ready"
+    check_service_ready "lvm-llava" 10 "Uvicorn running on http://"
 
     # llava server
     echo "Evaluating lvm-llava"
@@ -226,6 +247,14 @@ function validate_microservices() {
         "lvm-llava" \
         "lvm-llava" \
         '{"prompt":"Describe the image please.", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
+
+    echo "Evaluating lvm-llava with a list of images"
+    validate_service \
+        "http://${host_ip}:${LLAVA_SERVER_PORT}/generate" \
+        '"text":' \
+        "lvm-llava" \
+        "lvm-llava" \
+        '{"prompt":"Describe the image please.", "img_b64_str": ["iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC","iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC"]}'
 
     # lvm
     echo "Evaluating lvm-llava-svc"
@@ -264,6 +293,14 @@ function validate_megaservice() {
         "multimodalqna" \
         "multimodalqna-backend-server" \
         '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
+
+    echo "Validate megaservice with first query with an image"
+    validate_service \
+        "http://${host_ip}:8888/v1/multimodalqna" \
+        '"time_of_frame_ms":' \
+        "multimodalqna" \
+        "multimodalqna-backend-server" \
+        '{"messages": [{"role": "user", "content": [{"type": "text", "text": "Find a similar image"}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}]}'
 
     echo "Validate megaservice with follow-up query"
     validate_service \
