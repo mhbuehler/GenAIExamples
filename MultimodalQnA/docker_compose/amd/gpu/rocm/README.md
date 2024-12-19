@@ -1,123 +1,20 @@
-# Build Mega Service of MultimodalQnA on Xeon
+# Build Mega Service of MultimodalQnA for AMD ROCm
 
-This document outlines the deployment process for a MultimodalQnA application utilizing the [GenAIComps](https://github.com/opea-project/GenAIComps.git) microservice pipeline on Intel Xeon server. The steps include Docker image creation, container deployment via Docker Compose, and service execution to integrate microservices such as `multimodal_embedding` that employs [BridgeTower](https://huggingface.co/BridgeTower/bridgetower-large-itm-mlm-gaudi) model as embedding model, `multimodal_retriever`, `lvm`, and `multimodal-data-prep`. We will publish the Docker images to Docker Hub soon, it will simplify the deployment process for this service.
-
-## 🚀 Apply Xeon Server on AWS
-
-To apply a Xeon server on AWS, start by creating an AWS account if you don't have one already. Then, head to the [EC2 Console](https://console.aws.amazon.com/ec2/v2/home) to begin the process. Within the EC2 service, select the Amazon EC2 M7i or M7i-flex instance type to leverage the power of 4th Generation Intel Xeon Scalable processors. These instances are optimized for high-performance computing and demanding workloads.
+This document outlines the deployment process for a MultimodalQnA application utilizing the [GenAIComps](https://github.com/opea-project/GenAIComps.git) microservice pipeline on AMD server with ROCm GPUs. The steps include Docker image creation, container deployment via Docker Compose, and service execution to integrate microservices such as `multimodal_embedding` that employs [BridgeTower](https://huggingface.co/BridgeTower/bridgetower-large-itm-mlm-gaudi) model as embedding model, `multimodal_retriever`, `lvm`, and `multimodal-data-prep`. We will publish the Docker images to Docker Hub soon, it will simplify the deployment process for this service.
 
 For detailed information about these instance types, you can refer to this [link](https://aws.amazon.com/ec2/instance-types/m7i/). Once you've chosen the appropriate instance type, proceed with configuring your instance settings, including network configurations, security groups, and storage options.
 
 After launching your instance, you can connect to it using SSH (for Linux instances) or Remote Desktop Protocol (RDP) (for Windows instances). From there, you'll have full access to your Xeon server, allowing you to install, configure, and manage your applications as needed.
 
-**Certain ports in the EC2 instance need to opened up in the security group, for the microservices to work with the curl commands**
-
-> See one example below. Please open up these ports in the EC2 instance based on the IP addresses you want to allow
-
-```
-redis-vector-db
-===============
-Port 6379 - Open to 0.0.0.0/0
-Port 8001 - Open to 0.0.0.0/0
-
-embedding-multimodal-bridgetower
-=====================
-Port 6006 - Open to 0.0.0.0/0
-
-embedding-multimodal
-=========
-Port 6000 - Open to 0.0.0.0/0
-
-retriever-multimodal-redis
-=========
-Port 7000 - Open to 0.0.0.0/0
-
-lvm-llava
-================
-Port 8399 - Open to 0.0.0.0/0
-
-lvm-llava-svc
-===
-Port 9399 - Open to 0.0.0.0/0
-
-dataprep-multimodal-redis
-===
-Port 6007 - Open to 0.0.0.0/0
-
-multimodalqna
-==========================
-Port 8888 - Open to 0.0.0.0/0
-
-multimodalqna-ui
-=====================
-Port 5173 - Open to 0.0.0.0/0
-```
-
 ## Setup Environment Variables
 
 Since the `compose.yaml` will consume some environment variables, you need to setup them in advance as below.
 
-**Export the value of the public IP address of your Xeon server to the `host_ip` environment variable**
+Please use `./set_env.sh` (. set_env.sh) script to set up all needed Environment Variables.
 
-> Change the External_Public_IP below with the actual IPV4 value
-
-```
-export host_ip="External_Public_IP"
-```
-
-**Append the value of the public IP address to the no_proxy list**
-
-```bash
-export your_no_proxy=${your_no_proxy},"External_Public_IP"
-```
-
-```bash
-export host_ip=$(hostname -I | awk '{print $1}')
-export no_proxy=${your_no_proxy}
-export http_proxy=${your_http_proxy}
-export https_proxy=${your_http_proxy}
-export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
-export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
-export LVM_SERVICE_HOST_IP=${host_ip}
-export MEGA_SERVICE_HOST_IP=${host_ip}
-export WHISPER_PORT=7066
-export WHISPER_MODEL="base"
-export MAX_IMAGES=1
-export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
-export ASR_PORT=9099
-export ASR_SERVICE_PORT=3001
-export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
-export REDIS_DB_PORT=6379
-export REDIS_INSIGHTS_PORT=8001
-export REDIS_URL="redis://${host_ip}:${REDIS_DB_PORT}"
-export REDIS_HOST=${host_ip}
-export INDEX_NAME="mm-rag-redis"
-export DATAPREP_MMR_PORT=6007
-export DATAPREP_INGEST_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/ingest_with_text"
-export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/generate_transcripts"
-export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/generate_captions"
-export DATAPREP_GET_FILE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/dataprep/get_files"
-export DATAPREP_DELETE_FILE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/dataprep/delete_files"
-export EMM_BRIDGETOWER_PORT=6006
-export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
-export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMM_BRIDGETOWER_PORT/v1/encode"
-export MM_EMBEDDING_PORT_MICROSERVICE=6000
-export REDIS_RETREIEVER_PORT=7000
-export LVM_PORT=9399
-export LLAVA_SERVER_PORT=8399
-export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
-export LVM_ENDPOINT="http://${host_ip}:$LLAVA_SERVER_PORT"
-export MEGA_SERVICE_PORT=8888
-export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna"
-export UI_PORT=5173
-```
+**Export the value of the public IP address of your server to the `host_ip` environment variable**
 
 Note: Please replace with `host_ip` with you external IP address, do not use localhost.
-
-> Note: The `MAX_IMAGES` environment variable is used to specify the maximum number of images that will be sent from the LVM service to the LLaVA server.
-> If an image list longer than `MAX_IMAGES` is sent to the LVM server, a shortened image list will be sent to the LLaVA service. If the image list
-> needs to be shortened, the most recent images (the ones at the end of the list) are prioritized to send to the LLaVA service. Some LLaVA models have not
-> been trained with multiple images and may lead to inaccurate results. If `MAX_IMAGES` is not set, it will default to `1`.
 
 ## 🚀 Build Docker Images
 
@@ -128,7 +25,7 @@ Build embedding-multimodal-bridgetower docker image
 ```bash
 git clone https://github.com/opea-project/GenAIComps.git
 cd GenAIComps
-docker build --no-cache -t opea/embedding-multimodal-bridgetower:latest --build-arg EMBEDDER_PORT=$EMM_BRIDGETOWER_PORT --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/embeddings/multimodal/bridgetower/Dockerfile .
+docker build --no-cache -t opea/embedding-multimodal-bridgetower:latest --build-arg EMBEDDER_PORT=$EMBEDDER_PORT --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/embeddings/multimodal/bridgetower/Dockerfile .
 ```
 
 Build embedding-multimodal microservice image
@@ -137,13 +34,7 @@ Build embedding-multimodal microservice image
 docker build --no-cache -t opea/embedding-multimodal:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/embeddings/multimodal/multimodal_langchain/Dockerfile .
 ```
 
-### 2. Build retriever-multimodal-redis Image
-
-```bash
-docker build --no-cache -t opea/retriever-redis:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/retrievers/redis/langchain/Dockerfile .
-```
-
-### 3. Build LVM Images
+### 2. Build LVM Images
 
 Build lvm-llava image
 
@@ -151,10 +42,10 @@ Build lvm-llava image
 docker build --no-cache -t opea/lvm-llava:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/lvms/llava/dependency/Dockerfile .
 ```
 
-Build lvm-llava-svc microservice image
+### 3. Build retriever-multimodal-redis Image
 
 ```bash
-docker build --no-cache -t opea/lvm-llava-svc:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/lvms/llava/Dockerfile .
+docker build --no-cache -t opea/retriever-redis:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/retrievers/redis/langchain/Dockerfile .
 ```
 
 ### 4. Build dataprep-multimodal-redis Image
@@ -163,21 +54,7 @@ docker build --no-cache -t opea/lvm-llava-svc:latest --build-arg https_proxy=$ht
 docker build --no-cache -t opea/dataprep-multimodal-redis:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/dataprep/multimodal/redis/langchain/Dockerfile .
 ```
 
-### 5. Build asr images
-
-Build whisper server image
-
-```bash
-docker build --no-cache -t opea/whisper:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/asr/whisper/dependency/Dockerfile .
-```
-
-Build asr image
-
-```bash
-docker build --no-cache -t opea/asr:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/asr/whisper/Dockerfile .
-```
-
-### 6. Build MegaService Docker Image
+### 5. Build MegaService Docker Image
 
 To construct the Mega Service, we utilize the [GenAIComps](https://github.com/opea-project/GenAIComps.git) microservice pipeline within the [multimodalqna.py](../../../../multimodalqna.py) Python script. Build MegaService Docker image via below command:
 
@@ -188,7 +65,7 @@ docker build --no-cache -t opea/multimodalqna:latest --build-arg https_proxy=$ht
 cd ../..
 ```
 
-### 7. Build UI Docker Image
+### 6. Build UI Docker Image
 
 Build frontend Docker image via below command:
 
@@ -198,19 +75,22 @@ docker build --no-cache -t opea/multimodalqna-ui:latest --build-arg https_proxy=
 cd ../../../
 ```
 
-Then run the command `docker images`, you will have the following 11 Docker Images:
+### 7. Pull TGI AMD ROCm Image
+
+```bash
+docker pull ghcr.io/huggingface/text-generation-inference:2.4.1-rocm
+```
+
+Then run the command `docker images`, you will have the following 8 Docker Images:
 
 1. `opea/dataprep-multimodal-redis:latest`
-2. `opea/lvm-llava-svc:latest`
-3. `opea/lvm-llava:latest`
+2. `ghcr.io/huggingface/text-generation-inference:2.4.1-rocm`
+3. `opea/lvm-tgi:latest`
 4. `opea/retriever-multimodal-redis:latest`
-5. `opea/whisper:latest`
-6. `opea/asr:latest`
-7. `opea/redis-vector-db`
-8. `opea/embedding-multimodal:latest`
-9. `opea/embedding-multimodal-bridgetower:latest`
-10. `opea/multimodalqna:latest`
-11. `opea/multimodalqna-ui:latest`
+5. `opea/embedding-multimodal:latest`
+6. `opea/embedding-multimodal-bridgetower:latest`
+7. `opea/multimodalqna:latest`
+8. `opea/multimodalqna-ui:latest`
 
 ## 🚀 Start Microservices
 
@@ -222,29 +102,57 @@ By default, the multimodal-embedding and LVM models are set to a default value a
 | -------------------- | ------------------------------------------- |
 | embedding-multimodal | BridgeTower/bridgetower-large-itm-mlm-gaudi |
 | LVM                  | llava-hf/llava-1.5-7b-hf                    |
+| LVM                  | Xkev/Llama-3.2V-11B-cot                     |
+
+Note:
+
+For AMD ROCm System "Xkev/Llama-3.2V-11B-cot" is recommended to run on ghcr.io/huggingface/text-generation-inference:2.4.1-rocm
 
 ### Start all the services Docker Containers
 
 > Before running the docker compose command, you need to be in the folder that has the docker compose yaml file
 
 ```bash
-cd GenAIExamples/MultimodalQnA/docker_compose/intel/cpu/xeon/
+cd GenAIExamples/MultimodalQnA/docker_compose/amd/gpu/rocm
+. set_env.sh
 docker compose -f compose.yaml up -d
 ```
+
+Note: Please replace with `host_ip` with your external IP address, do not use localhost.
+
+Note: In order to limit access to a subset of GPUs, please pass each device individually using one or more -device /dev/dri/rendered<node>, where <node> is the card index, starting from 128. (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html#docker-restrict-gpus)
+
+Example for set isolation for 1 GPU
+
+```
+      - /dev/dri/card0:/dev/dri/card0
+      - /dev/dri/renderD128:/dev/dri/renderD128
+```
+
+Example for set isolation for 2 GPUs
+
+```
+      - /dev/dri/card0:/dev/dri/card0
+      - /dev/dri/renderD128:/dev/dri/renderD128
+      - /dev/dri/card1:/dev/dri/card1
+      - /dev/dri/renderD129:/dev/dri/renderD129
+```
+
+Please find more information about accessing and restricting AMD GPUs in the link (https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html#docker-restrict-gpus)
 
 ### Validate Microservices
 
 1. embedding-multimodal-bridgetower
 
 ```bash
-curl http://${host_ip}:${EMM_BRIDGETOWER_PORT}/v1/encode \
+curl http://${host_ip}:${EMBEDDER_PORT}/v1/encode \
      -X POST \
      -H "Content-Type:application/json" \
      -d '{"text":"This is example"}'
 ```
 
 ```bash
-curl http://${host_ip}:${EMM_BRIDGETOWER_PORT}/v1/encode \
+curl http://${host_ip}:${EMBEDDER_PORT}/v1/encode \
      -X POST \
      -H "Content-Type:application/json" \
      -d '{"text":"This is example", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
@@ -270,22 +178,13 @@ curl http://${host_ip}:$MM_EMBEDDING_PORT_MICROSERVICE/v1/embeddings \
 
 ```bash
 export your_embedding=$(python3 -c "import random; embedding = [random.uniform(-1, 1) for _ in range(512)]; print(embedding)")
-curl http://${host_ip}:${REDIS_RETRIEVER_PORT}/v1/multimodal_retrieval \
+curl http://${host_ip}:7000/v1/multimodal_retrieval \
     -X POST \
     -H "Content-Type: application/json" \
     -d "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 ```
 
-4. asr
-
-```bash
-curl ${ASR_SERVICE_ENDPOINT} \
-    -X POST \
-    -H "Content-Type: application/json" \
-    -d '{"byte_str" : "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}'
-```
-
-5. lvm-llava
+4. lvm-llava
 
 ```bash
 curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
@@ -294,17 +193,17 @@ curl http://${host_ip}:${LLAVA_SERVER_PORT}/generate \
      -d '{"prompt":"Describe the image please.", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
 ```
 
-6. lvm-llava-svc
+5. lvm-llava-svc
 
 ```bash
-curl http://${host_ip}:${LVM_PORT}/v1/lvm \
+curl http://${host_ip}:9399/v1/lvm \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [{"b64_img_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "transcript_for_inference": "yellow image", "video_id": "8c7461df-b373-4a00-8696-9a2234359fe0", "time_of_frame_ms":"37000000", "source_video":"WeAreGoingOnBullrun_8c7461df-b373-4a00-8696-9a2234359fe0.mp4"}], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
 ```
 
 ```bash
-curl http://${host_ip}:${LVM_PORT}/v1/lvm  \
+curl http://${host_ip}:9399/v1/lvm  \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"image": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "prompt":"What is this?"}'
@@ -313,13 +212,13 @@ curl http://${host_ip}:${LVM_PORT}/v1/lvm  \
 Also, validate LVM Microservice with empty retrieval results
 
 ```bash
-curl http://${host_ip}:${LVM_PORT}/v1/lvm \
+curl http://${host_ip}:9399/v1/lvm \
     -X POST \
     -H 'Content-Type: application/json' \
     -d '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
 ```
 
-7. dataprep-multimodal-redis
+6. dataprep-multimodal-redis
 
 Download a sample video, image, and audio file and create a caption
 
@@ -393,39 +292,17 @@ curl -X POST \
     ${DATAPREP_DELETE_FILE_ENDPOINT}
 ```
 
-8. MegaService
+7. MegaService
 
-Test the MegaService with a text query:
 ```bash
-curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna \
+curl http://${host_ip}:8888/v1/multimodalqna \
     -H "Content-Type: application/json" \
     -X POST \
     -d '{"messages": "What is the revenue of Nike in 2023?"}'
 ```
 
-Test the MegaService with an audio query:
-```bash
-curl http://${host_ip}:8888/v1/multimodalqna  \
-    -H "Content-Type: application/json"  \
-    -d '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
-```
-
-Test the MegaService with a text and image query:
 ```bash
 curl http://${host_ip}:8888/v1/multimodalqna \
-    -H "Content-Type: application/json" \
-    -d  '{"messages": [{"role": "user", "content": [{"type": "text", "text": "Green bananas in a tree"}, {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/test-stuff2017/000000004248.jpg"}}]}]}'
-```
-
-Test the MegaService with a back and forth conversation between the user and assistant:
-```bash
-curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna  \
-    -H "Content-Type: application/json"  \
-    -d '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
-```
-
-```bash
-curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna \
     -H "Content-Type: application/json" \
     -d '{"messages": [{"role": "user", "content": [{"type": "text", "text": "hello, "}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}, {"role": "assistant", "content": "opea project! "}, {"role": "user", "content": "chao, "}], "max_tokens": 10}'
 ```

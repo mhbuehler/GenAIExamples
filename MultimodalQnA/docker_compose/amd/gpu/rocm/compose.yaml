@@ -1,4 +1,4 @@
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024 Advanced Micro Devices, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
 services:
@@ -6,7 +6,7 @@ services:
     image: ${REGISTRY:-opea}/whisper:${TAG:-latest}
     container_name: whisper-service
     ports:
-      - "${WHISPER_PORT}:${WHISPER_PORT}"
+      - "7066:7066"
     ipc: host
     environment:
       no_proxy: ${no_proxy}
@@ -17,7 +17,7 @@ services:
     image: ${REGISTRY:-opea}/asr:${TAG:-latest}
     container_name: asr-service
     ports:
-      - "${ASR_SERVICE_PORT}:${ASR_PORT}"
+      - "${ASR_SERVICE_PORT}:9099"
     ipc: host
     environment:
       ASR_ENDPOINT: ${ASR_ENDPOINT}
@@ -27,16 +27,16 @@ services:
     image: redis/redis-stack:7.2.0-v9
     container_name: redis-vector-db
     ports:
-      - "${REDIS_DB_PORT}:${REDIS_DB_PORT}"
-      - "${REDIS_INSIGHTS_PORT}:${REDIS_INSIGHTS_PORT}"
+      - "6379:6379"
+      - "8001:8001"
   dataprep-multimodal-redis:
     image: ${REGISTRY:-opea}/dataprep-multimodal-redis:${TAG:-latest}
     container_name: dataprep-multimodal-redis
     depends_on:
       - redis-vector-db
-      - lvm-llava
+      - lvm-tgi
     ports:
-      - "${DATAPREP_MMR_PORT}:${DATAPREP_MMR_PORT}"
+      - "6007:6007"
     environment:
       no_proxy: ${no_proxy}
       http_proxy: ${http_proxy}
@@ -44,19 +44,19 @@ services:
       REDIS_URL: ${REDIS_URL}
       REDIS_HOST: ${REDIS_HOST}
       INDEX_NAME: ${INDEX_NAME}
-      LVM_ENDPOINT: "http://${LVM_SERVICE_HOST_IP}:${LVM_PORT}/v1/lvm"
-      HUGGINGFACEHUB_API_TOKEN: ${HUGGINGFACEHUB_API_TOKEN}
+      LVM_ENDPOINT: "http://${LVM_SERVICE_HOST_IP}:9399/v1/lvm"
+      HUGGINGFACEHUB_API_TOKEN: ${MULTIMODAL_HUGGINGFACEHUB_API_TOKEN}
     restart: unless-stopped
   embedding-multimodal-bridgetower:
     image: ${REGISTRY:-opea}/embedding-multimodal-bridgetower:${TAG:-latest}
     container_name: embedding-multimodal-bridgetower
     ports:
-      - ${EMM_BRIDGETOWER_PORT}:${EMM_BRIDGETOWER_PORT}
+      - ${EMBEDDER_PORT}:${EMBEDDER_PORT}
     environment:
       no_proxy: ${no_proxy}
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
-      PORT: ${EMM_BRIDGETOWER_PORT}
+      PORT: ${EMBEDDER_PORT}
     entrypoint: ["python", "bridgetower_server.py", "--device", "cpu", "--model_name_or_path", $EMBEDDING_MODEL_ID]
     restart: unless-stopped
   embedding-multimodal:
@@ -80,7 +80,7 @@ services:
     depends_on:
       - redis-vector-db
     ports:
-      - "${REDIS_RETREIEVER_PORT}:${REDIS_RETREIEVER_PORT}"
+      - "7000:7000"
     ipc: host
     environment:
       no_proxy: ${no_proxy}
@@ -90,31 +90,48 @@ services:
       INDEX_NAME: ${INDEX_NAME}
       BRIDGE_TOWER_EMBEDDING: ${BRIDGE_TOWER_EMBEDDING}
     restart: unless-stopped
-  lvm-llava:
-    image: ${REGISTRY:-opea}/lvm-llava:${TAG:-latest}
-    container_name: lvm-llava
+  tgi-rocm:
+    image: ghcr.io/huggingface/text-generation-inference:3.0.1-rocm
+    container_name: tgi-llava-rocm-server
     ports:
-      - "${LLAVA_SERVER_PORT}:${LLAVA_SERVER_PORT}"
+      - "8399:80"
     environment:
       no_proxy: ${no_proxy}
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
-    entrypoint: ["python", "llava_server.py", "--device", "cpu", "--model_name_or_path", $LVM_MODEL_ID]
+      TGI_LLM_ENDPOINT: "http://${HOST_IP}:${MULTIMODAL_TGI_SERVICE_PORT}"
+      HUGGINGFACEHUB_API_TOKEN: ${MULTIMODAL_HUGGINGFACEHUB_API_TOKEN}
+      HUGGING_FACE_HUB_TOKEN: ${MULTIMODAL_HUGGINGFACEHUB_API_TOKEN}
+    volumes:
+      - "/var/opea/multimodalqna-service/data:/data"
+    shm_size: 64g
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri/:/dev/dri/
+    cap_add:
+      - SYS_PTRACE
+    group_add:
+      - video
+    security_opt:
+      - seccomp:unconfined
+    ipc: host
+    command: --model-id ${LVM_MODEL_ID} --max-input-tokens 3048 --max-total-tokens 4096
     restart: unless-stopped
-  lvm-llava-svc:
-    image: ${REGISTRY:-opea}/lvm-llava-svc:${TAG:-latest}
-    container_name: lvm-llava-svc
+  lvm-tgi:
+    image: ${REGISTRY:-opea}/lvm-tgi:${TAG:-latest}
+    container_name: lvm-tgi
     depends_on:
-      - lvm-llava
+      - tgi-rocm
     ports:
-      - "${LVM_PORT}:${LVM_PORT}"
+      - "9399:9399"
     ipc: host
     environment:
       no_proxy: ${no_proxy}
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
       LVM_ENDPOINT: ${LVM_ENDPOINT}
-      MAX_IMAGES: ${MAX_IMAGES:-1}
+      HF_HUB_DISABLE_PROGRESS_BARS: 1
+      HF_HUB_ENABLE_HF_TRANSFER: 0
     restart: unless-stopped
   multimodalqna:
     image: ${REGISTRY:-opea}/multimodalqna:${TAG:-latest}
@@ -124,10 +141,9 @@ services:
       - dataprep-multimodal-redis
       - embedding-multimodal
       - retriever-redis
-      - lvm-llava-svc
-      - asr
+      - lvm-tgi
     ports:
-      - "${MEGA_SERVICE_PORT}:${MEGA_SERVICE_PORT}"
+      - "8888:8888"
     environment:
       no_proxy: ${no_proxy}
       https_proxy: ${https_proxy}
@@ -137,7 +153,6 @@ services:
       MM_EMBEDDING_PORT_MICROSERVICE: ${MM_EMBEDDING_PORT_MICROSERVICE}
       MM_RETRIEVER_SERVICE_HOST_IP: ${MM_RETRIEVER_SERVICE_HOST_IP}
       LVM_SERVICE_HOST_IP: ${LVM_SERVICE_HOST_IP}
-      LVM_MODEL_ID: ${LVM_MODEL_ID}
       ASR_SERVICE_PORT: ${ASR_SERVICE_PORT}
       ASR_SERVICE_ENDPOINT: ${ASR_SERVICE_ENDPOINT}
     ipc: host
@@ -148,7 +163,7 @@ services:
     depends_on:
       - multimodalqna
     ports:
-      - "${UI_PORT}:${UI_PORT}"
+      - "5173:5173"
     environment:
       - no_proxy=${no_proxy}
       - https_proxy=${https_proxy}

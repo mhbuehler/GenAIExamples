@@ -1,8 +1,8 @@
 #!/bin/bash
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024 Advanced Micro Devices, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-set -e
+set -ex
 IMAGE_REPO=${IMAGE_REPO:-"opea"}
 IMAGE_TAG=${IMAGE_TAG:-"latest"}
 echo "REGISTRY=IMAGE_REPO=${IMAGE_REPO}"
@@ -18,88 +18,59 @@ export image_fn="apple.png"
 export video_fn="WeAreGoingOnBullrun.mp4"
 export caption_fn="apple.txt"
 
-function check_service_ready() {
-    local container_name="$1"
-    local max_retries="$2"
-    local log_string="$3"
-
-    for i in $(seq 1 "$max_retries")
-    do
-        service_logs=$(docker logs "$container_name" 2>&1 | grep "$log_string" || true)
-        if [[ -z "$service_logs" ]]; then
-            echo "The $container_name service is not ready yet, sleeping 30s..."
-            sleep 30s
-        else
-            echo "$container_name service is ready"
-            break
-        fi
-    done
-
-    if [[ $i -ge $max_retries ]]; then
-        echo "WARNING: Max retries reached when waiting for the $container_name service to be ready"
-        docker logs "$container_name" >> "${LOG_PATH}/$container_name_file.log"
-    fi
-}
-
 function build_docker_images() {
     cd $WORKPATH/docker_image_build
-    git clone https://github.com/mhbuehler/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"mmqna-image-query"}" && cd ../
+    git clone https://github.com/opea-project/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"main"}" && cd ../
+
     echo "Build all the images with --no-cache, check docker_image_build.log for details..."
-    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding-multimodal retriever-redis lvm-llava lvm-llava-svc dataprep-multimodal-redis whisper asr"
+    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding-multimodal retriever-redis lvm-tgi lvm-llava-svc dataprep-multimodal-redis whisper asr"
     docker compose -f build.yaml build ${service_list} --no-cache > ${LOG_PATH}/docker_image_build.log
 
     docker images && sleep 1m
 }
 
 function setup_env() {
+    export HOST_IP=${ip_address}
     export host_ip=${ip_address}
-    export MM_EMBEDDING_SERVICE_HOST_IP=${host_ip}
-    export MM_RETRIEVER_SERVICE_HOST_IP=${host_ip}
-    export LVM_SERVICE_HOST_IP=${host_ip}
-    export MEGA_SERVICE_HOST_IP=${host_ip}
-    export WHISPER_PORT=7066
-    export MAX_IMAGES=1
-    export WHISPER_MODEL="base"
-    export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
-    export ASR_PORT=9099
+    export MULTIMODAL_HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN}
+    export MULTIMODAL_TGI_SERVICE_PORT="8399"
+    export no_proxy=${your_no_proxy}
+    export http_proxy=${your_http_proxy}
+    export https_proxy=${your_http_proxy}
+    export BRIDGE_TOWER_EMBEDDING=true
+    export EMBEDDER_PORT=6006
+    export MMEI_EMBEDDING_ENDPOINT="http://${HOST_IP}:$EMBEDDER_PORT/v1/encode"
+    export MM_EMBEDDING_PORT_MICROSERVICE=6000
+    export ASR_ENDPOINT=http://$host_ip:7066
     export ASR_SERVICE_PORT=3001
     export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
-    export REDIS_DB_PORT=6379
-    export REDIS_INSIGHTS_PORT=8001
-    export REDIS_URL="redis://${host_ip}:${REDIS_DB_PORT}"
-    export REDIS_HOST=${host_ip}
+    export REDIS_URL="redis://${HOST_IP}:6379"
+    export REDIS_HOST=${HOST_IP}
     export INDEX_NAME="mm-rag-redis"
-    export DATAPREP_MMR_PORT=6007
-    export DATAPREP_INGEST_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/ingest_with_text"
-    export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/generate_transcripts"
-    export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/generate_captions"
-    export DATAPREP_GET_FILE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/dataprep/get_files"
-    export DATAPREP_DELETE_FILE_ENDPOINT="http://${host_ip}:${DATAPREP_MMR_PORT}/v1/dataprep/delete_files"
-    export EMM_BRIDGETOWER_PORT=6006
-    export BRIDGE_TOWER_EMBEDDING=true
-    export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
-    export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMM_BRIDGETOWER_PORT/v1/encode"
-    export MM_EMBEDDING_PORT_MICROSERVICE=6000
-    export REDIS_RETREIEVER_PORT=7000
-    export LVM_PORT=9399
     export LLAVA_SERVER_PORT=8399
-    export LVM_MODEL_ID="llava-hf/llava-1.5-7b-hf"
-    export LVM_ENDPOINT="http://${host_ip}:$LLAVA_SERVER_PORT"
-    export MEGA_SERVICE_PORT=8888
-    export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna"
-    export UI_PORT=5173
+    export LVM_ENDPOINT="http://${HOST_IP}:8399"
+    export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
+    export LVM_MODEL_ID="Xkev/Llama-3.2V-11B-cot"
+    export WHISPER_MODEL="base"
+    export MM_EMBEDDING_SERVICE_HOST_IP=${HOST_IP}
+    export MM_RETRIEVER_SERVICE_HOST_IP=${HOST_IP}
+    export LVM_SERVICE_HOST_IP=${HOST_IP}
+    export MEGA_SERVICE_HOST_IP=${HOST_IP}
+    export BACKEND_SERVICE_ENDPOINT="http://${HOST_IP}:8888/v1/multimodalqna"
+    export DATAPREP_INGEST_SERVICE_ENDPOINT="http://${HOST_IP}:6007/v1/ingest_with_text"
+    export DATAPREP_GEN_TRANSCRIPT_SERVICE_ENDPOINT="http://${HOST_IP}:6007/v1/generate_transcripts"
+    export DATAPREP_GEN_CAPTION_SERVICE_ENDPOINT="http://${HOST_IP}:6007/v1/generate_captions"
+    export DATAPREP_GET_FILE_ENDPOINT="http://${HOST_IP}:6007/v1/dataprep/get_files"
+    export DATAPREP_DELETE_FILE_ENDPOINT="http://${HOST_IP}:6007/v1/dataprep/delete_files"
 }
 
-
 function start_services() {
-    echo "Starting services..."
-    cd $WORKPATH/docker_compose/intel/cpu/xeon
+    cd $WORKPATH/docker_compose/amd/gpu/rocm
 
 
     # Start Docker Containers
     docker compose -f compose.yaml up -d > ${LOG_PATH}/start_services_with_compose.log
     sleep 2m
-    echo "Services started."
 }
 
 function prepare_data() {
@@ -165,14 +136,14 @@ function validate_microservices() {
     # Bridgetower Embedding Server
     echo "Validating embedding-multimodal-bridgetower"
     validate_service \
-        "http://${host_ip}:${EMM_BRIDGETOWER_PORT}/v1/encode" \
+        "http://${host_ip}:${EMBEDDER_PORT}/v1/encode" \
         '"embedding":[' \
         "embedding-multimodal-bridgetower" \
         "embedding-multimodal-bridgetower" \
         '{"text":"This is example"}'
 
     validate_service \
-        "http://${host_ip}:${EMM_BRIDGETOWER_PORT}/v1/encode" \
+        "http://${host_ip}:${EMBEDDER_PORT}/v1/encode" \
         '"embedding":[' \
         "embedding-multimodal-bridgetower" \
         "embedding-multimodal-bridgetower" \
@@ -231,39 +202,30 @@ function validate_microservices() {
     echo "Validating retriever-redis"
     your_embedding=$(python3 -c "import random; embedding = [random.uniform(-1, 1) for _ in range(512)]; print(embedding)")
     validate_service \
-        "http://${host_ip}:${REDIS_RETREIEVER_PORT}/v1/retrieval" \
+        "http://${host_ip}:7000/v1/retrieval" \
         "retrieved_docs" \
         "retriever-redis" \
         "retriever-redis" \
         "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 
-    echo "Wait for lvm-llava service to be ready"
-    check_service_ready "lvm-llava" 10 "Uvicorn running on http://"
+    sleep 3m
 
     # llava server
     echo "Evaluating lvm-llava"
     validate_service \
         "http://${host_ip}:${LLAVA_SERVER_PORT}/generate" \
-        '"text":' \
-        "lvm-llava" \
-        "lvm-llava" \
-        '{"prompt":"Describe the image please.", "img_b64_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC"}'
-
-    echo "Evaluating lvm-llava with a list of images"
-    validate_service \
-        "http://${host_ip}:${LLAVA_SERVER_PORT}/generate" \
-        '"text":' \
-        "lvm-llava" \
-        "lvm-llava" \
-        '{"prompt":"Describe the image please.", "img_b64_str": ["iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC","iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC"]}'
+        '"generated_text":' \
+        "tgi-llava-rocm-server" \
+        "tgi-llava-rocm-server" \
+        '{"inputs":"![](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/rabbit.png)What is this a picture of?\n\n","parameters":{"max_new_tokens":16, "seed": 42}}'
 
     # lvm
     echo "Evaluating lvm-llava-svc"
     validate_service \
-        "http://${host_ip}:${LVM_PORT}/v1/lvm" \
+        "http://${host_ip}:9399/v1/lvm" \
         '"text":"' \
-        "lvm-llava-svc" \
-        "lvm-llava-svc" \
+        "lvm-tgi" \
+        "lvm-tgi" \
         '{"retrieved_docs": [], "initial_query": "What is this?", "top_n": 1, "metadata": [{"b64_img_str": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC", "transcript_for_inference": "yellow image", "video_id": "8c7461df-b373-4a00-8696-9a2234359fe0", "time_of_frame_ms":"37000000", "source_video":"WeAreGoingOnBullrun_8c7461df-b373-4a00-8696-9a2234359fe0.mp4"}], "chat_template":"The caption of the image is: '\''{context}'\''. {question}"}'
 
     # data prep requiring lvm
@@ -281,7 +243,7 @@ function validate_megaservice() {
     # Curl the Mega Service with retrieval
     echo "Validate megaservice with first query"
     validate_service \
-        "http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna" \
+        "http://${host_ip}:8888/v1/multimodalqna" \
         '"time_of_frame_ms":' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
@@ -289,23 +251,15 @@ function validate_megaservice() {
 
     echo "Validate megaservice with first audio query"
     validate_service \
-        "http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna" \
+        "http://${host_ip}:8888/v1/multimodalqna" \
         '"time_of_frame_ms":' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
         '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
 
-    echo "Validate megaservice with first query with an image"
-    validate_service \
-        "http://${host_ip}:8888/v1/multimodalqna" \
-        '"time_of_frame_ms":' \
-        "multimodalqna" \
-        "multimodalqna-backend-server" \
-        '{"messages": [{"role": "user", "content": [{"type": "text", "text": "Find a similar image"}, {"type": "image_url", "image_url": {"url": "https://www.ilankelman.org/stopsigns/australia.jpg"}}]}]}'
-
     echo "Validate megaservice with follow-up query"
     validate_service \
-        "http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna" \
+        "http://${host_ip}:8888/v1/multimodalqna" \
         '"content":"' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
@@ -313,7 +267,7 @@ function validate_megaservice() {
 
     echo "Validate megaservice with multiple text queries"
     validate_service \
-        "http://${host_ip}:$MEGA_SERVICE_PORT/v1/multimodalqna" \
+        "http://${host_ip}:8888/v1/multimodalqna" \
         '"content":"' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
@@ -338,10 +292,8 @@ function delete_data() {
 }
 
 function stop_docker() {
-    echo "Stopping docker..."
-    cd $WORKPATH/docker_compose/intel/cpu/xeon
+    cd $WORKPATH/docker_compose/amd/gpu/rocm
     docker compose -f compose.yaml stop && docker compose -f compose.yaml rm -f
-    echo "Docker stopped."
 }
 
 function main() {
