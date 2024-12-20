@@ -418,7 +418,7 @@ def ingest_pdf(filepath, request: gr.Request):
         yield (
             gr.Textbox(
                 visible=True,
-                value=f"Something went wrong (server error: {response.status_code})!\nPlease click the X button on the top right of the PDF upload box to reupload your video.",
+                value=f"Something went wrong (server error: {response.status_code})!\nPlease click the X button on the top right of the PDF upload box to reupload your file.",
             )
         )
         time.sleep(2)

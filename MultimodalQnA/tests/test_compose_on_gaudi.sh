@@ -17,6 +17,7 @@ ip_address=$(hostname -I | awk '{print $1}')
 export image_fn="apple.png"
 export video_fn="WeAreGoingOnBullrun.mp4"
 export caption_fn="apple.txt"
+export pdf_fn="nke-10k-2023.pdf"
 
 function check_service_ready() {
     local container_name="$1"
@@ -96,6 +97,7 @@ function prepare_data() {
     echo "Downloading image and video"
     wget https://github.com/docarray/docarray/blob/main/tests/toydata/image-data/apple.png?raw=true -O ${image_fn}
     wget http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4 -O ${video_fn}
+    wget https://raw.githubusercontent.com/opea-project/GenAIComps/v1.1/comps/retrievers/redis/data/nke-10k-2023.pdf -O ${pdf_fn}
     echo "Writing caption file"
     echo "This is an apple."  > ${caption_fn}
 
