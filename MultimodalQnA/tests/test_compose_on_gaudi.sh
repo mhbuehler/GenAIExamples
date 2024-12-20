@@ -82,7 +82,7 @@ function setup_env() {
     export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
     export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMM_BRIDGETOWER_PORT/v1/encode"
     export MM_EMBEDDING_PORT_MICROSERVICE=6000
-    export REDIS_RETREIEVER_PORT=7000
+    export REDIS_RETRIEVER_PORT=7000
     export LVM_PORT=9399
     export LLAVA_SERVER_PORT=8399
     export TGI_GAUDI_PORT="${LLAVA_SERVER_PORT}:80"
@@ -230,7 +230,7 @@ function validate_microservices() {
     echo "Validating retriever-redis"
     your_embedding=$(python3 -c "import random; embedding = [random.uniform(-1, 1) for _ in range(512)]; print(embedding)")
     validate_service \
-        "http://${host_ip}:${REDIS_RETREIEVER_PORT}/v1/retrieval" \
+        "http://${host_ip}:${REDIS_RETRIEVER_PORT}/v1/retrieval" \
         "retrieved_docs" \
         "retriever-redis" \
         "retriever-redis" \
@@ -296,7 +296,7 @@ function validate_megaservice() {
 
     echo "Validate megaservice with first query with an image"
     validate_service \
-        "http://${host_ip}:8888/v1/multimodalqna" \
+        "http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna" \
         '"time_of_frame_ms":' \
         "multimodalqna" \
         "multimodalqna-backend-server" \
