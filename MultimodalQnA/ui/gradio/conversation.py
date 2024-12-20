@@ -35,6 +35,7 @@ class Conversation:
     image: str = None
     audio_query_file: str = None
     image_query_file: str = None
+    pdf: str = None
 
     def _template_caption(self):
         out = ""
@@ -184,6 +185,7 @@ class Conversation:
             "split_video": self.split_video,
             "image": self.image,
             "audio_query_file": self.audio_query_file,
+            "pdf": self.pdf,
         }
 
 
@@ -202,4 +204,5 @@ multimodalqna_conv = Conversation(
     split_video=None,
     image=None,
     audio_query_file=None,
+    pdf=None,
 )
