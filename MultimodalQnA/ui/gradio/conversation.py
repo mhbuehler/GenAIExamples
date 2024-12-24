@@ -74,6 +74,8 @@ class Conversation:
                             )
                             if base64_frame is None:
                                 base64_frame = ""
+                            if self.caption and content[0]["type"] == "text":
+                                content[0]["text"] = content[0]["text"] + " " + self._template_caption()
                             content.append({"type": "image_url", "image_url": {"url": base64_frame}})
                         dic["content"] = content
                         conv_dict.append(dic)
