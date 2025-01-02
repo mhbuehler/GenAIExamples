@@ -115,7 +115,8 @@ def http_bot(state, request: gr.Request):
         "messages": prompt,
     }
 
-    logger.info(f"==== request ====\n{pload}")
+    if logflag:
+        logger.info(f"==== request ====\n{pload}")
     logger.info(f"==== url request ====\n{gateway_addr}")
 
     state.messages[-1][-1] = "▌"
