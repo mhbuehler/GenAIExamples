@@ -164,7 +164,6 @@ services:
       ASR_SERVICE_ENDPOINT: ${ASR_SERVICE_ENDPOINT}
       WHISPER_PORT: ${WHISPER_PORT}
       WHISPER_SERVER_ENDPOINT: ${WHISPER_SERVER_ENDPOINT}
-      ASR_ENDPOINT: ${ASR_ENDPOINT}
     ipc: host
     restart: always
   multimodalqna-ui:
