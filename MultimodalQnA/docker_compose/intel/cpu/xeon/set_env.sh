@@ -18,6 +18,7 @@ export LVM_SERVICE_HOST_IP=${host_ip}
 export MEGA_SERVICE_HOST_IP=${host_ip}
 
 export WHISPER_PORT=7066
+export WHISPER_SERVER_ENDPOINT="http://${host_ip}:${WHISPER_PORT}/v1/asr"
 export WHISPER_MODEL="base"
 export MAX_IMAGES=1
 export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
