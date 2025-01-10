@@ -200,11 +200,12 @@ Then run the command `docker images`, you will have the following 11 Docker Imag
 3. `opea/lvm-llava:latest`
 4. `opea/retriever-multimodal-redis:latest`
 5. `opea/whisper:latest`
-6. `opea/redis-vector-db`
-7. `opea/embedding:latest`
-8. `opea/embedding-multimodal-bridgetower:latest`
-9. `opea/multimodalqna:latest`
-10. `opea/multimodalqna-ui:latest`
+6. `opea/asr:latest`
+7. `opea/redis-vector-db`
+8. `opea/embedding:latest`
+9. `opea/embedding-multimodal-bridgetower:latest`
+10. `opea/multimodalqna:latest`
+11. `opea/multimodalqna-ui:latest`
 
 ## 🚀 Start Microservices
 
