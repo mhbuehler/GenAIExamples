@@ -83,8 +83,6 @@ export WHISPER_PORT=7066
 export WHISPER_SERVER_ENDPOINT="http://${host_ip}:${WHISPER_PORT}/v1/asr"
 export WHISPER_MODEL="base"
 export MAX_IMAGES=1
-export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
-export ASR_PORT=9099
 export ASR_SERVICE_PORT=3001
 export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
 export REDIS_DB_PORT=6379
@@ -407,7 +405,7 @@ curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna \
 Test the MegaService with an audio query:
 
 ```bash
-curl http://${host_ip}:8888/v1/multimodalqna  \
+curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna  \
     -H "Content-Type: application/json"  \
     -d '{"messages": [{"role": "user", "content": [{"type": "audio", "audio": "UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"}]}]}'
 ```
@@ -415,7 +413,7 @@ curl http://${host_ip}:8888/v1/multimodalqna  \
 Test the MegaService with a text and image query:
 
 ```bash
-curl http://${host_ip}:8888/v1/multimodalqna \
+curl http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multimodalqna \
     -H "Content-Type: application/json" \
     -d  '{"messages": [{"role": "user", "content": [{"type": "text", "text": "Green bananas in a tree"}, {"type": "image_url", "image_url": {"url": "http://images.cocodataset.org/test-stuff2017/000000004248.jpg"}}]}]}'
 ```

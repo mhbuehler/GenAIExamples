@@ -174,6 +174,8 @@ docker compose -f compose.yaml up -d
 
 ![MultimodalQnA-upload-waiting-screenshot](./assets/img/upload-gen-trans.png)
 
-![MultimodalQnA-upload-done-screenshot](./assets/img/upload-gen-captions.png)
+![MultimodalQnA-upload-done-screenshot](./assets/img/mmqna-ui.png)
 
 ![MultimodalQnA-query-example-screenshot](./assets/img/example_query.png)
+
+![MultimodalQnA-upload-pdf-screenshot](./assets/img/ingest_pdf.png)
