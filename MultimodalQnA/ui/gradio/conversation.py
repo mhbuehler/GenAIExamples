@@ -3,9 +3,9 @@
 
 import dataclasses
 from enum import Enum, auto
-from typing import List, Dict
-from PIL import Image
+from typing import Dict, List
 
+from PIL import Image
 from utils import convert_audio_to_base64, get_b64_frame_from_timestamp
 
 
@@ -34,7 +34,6 @@ class Conversation:
     split_video: str = None
     image: str = None
     audio_query_file: str = None
-    image_query_file: str = None
     pdf: str = None
 
     def _template_caption(self):
@@ -49,9 +48,17 @@ class Conversation:
             # Need to do RAG. If the query is text, prompt is the query only
             if self.audio_query_file:
                 ret = [{"role": "user", "content": [{"type": "audio", "audio": self.get_b64_audio_query()}]}]
-            elif self.image_query_file:
-                b64_image = get_b64_frame_from_timestamp(self.image_query_file, 0)
-                ret = [{"role": "user", "content": [{"type": "text", "text": self.messages[0][1]},{"type": "image_url", "image_url": {"url": b64_image}}]}]
+            elif len(messages) in self.image_query_files:
+                b64_image = get_b64_frame_from_timestamp(self.image_query_files[len(messages)], 0)
+                ret = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": messages[0][1]},
+                            {"type": "image_url", "image_url": {"url": b64_image}},
+                        ],
+                    }
+                ]
             else:
                 ret = messages[0][1]
         else:
@@ -80,8 +87,15 @@ class Conversation:
                                 content[0]["text"] = content[0]["text"] + " " + self._template_caption()
                             content.append({"type": "image_url", "image_url": {"url": base64_frame}})
                         # There might be a query image
-                        if self.image_query_file:
-                            content.append({"type": "image_url", "image_url": {"url": self.image_query_file}})
+                        if i + 2 in self.image_query_files:
+                            content.append(
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": get_b64_frame_from_timestamp(self.image_query_files[i + 2], 0)
+                                    },
+                                }
+                            )
                         dic["content"] = content
                         conv_dict.append(dic)
             else:
@@ -132,10 +146,10 @@ class Conversation:
                     img_str = f'<img src="data:image/png;base64,{img_b64_str}" alt="user upload image" />'
                     msg = img_str + msg.replace("<image>", "").strip()
                     ret.append([msg, None])
-                elif self.image_query_file:
+                elif i in self.image_query_files:
                     import base64
                     from io import BytesIO
-                    
+
                     image = Image.open(self.image_query_files[i])
                     max_hw, min_hw = max(image.size), min(image.size)
                     aspect_ratio = max_hw / min_hw
@@ -149,14 +163,14 @@ class Conversation:
                         H, W = shortest_edge, longest_edge
                     image = image.resize((W, H))
                     buffered = BytesIO()
-                    if image.format not in ['JPEG', 'JPG']:
-                        image = image.convert('RGB')
+                    if image.format not in ["JPEG", "JPG"]:
+                        image = image.convert("RGB")
                     image.save(buffered, format="JPEG")
                     img_b64_str = base64.b64encode(buffered.getvalue()).decode()
                     img_str = f'<img src="data:image/png;base64,{img_b64_str}" alt="user upload image" />'
                     msg = img_str + msg.replace("<image>", "").strip()
                     ret.append([msg, None])
-                    
+
                 else:
                     ret.append([msg, None])
             else:
