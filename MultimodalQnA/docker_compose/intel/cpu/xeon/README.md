@@ -40,6 +40,10 @@ lvm
 ===
 Port 9399 - Open to 0.0.0.0/0
 
+whisper
+===
+port 7066 - Open to 0.0.0.0/0
+
 dataprep-multimodal-redis
 ===
 Port 6007 - Open to 0.0.0.0/0
@@ -162,7 +166,7 @@ docker build --no-cache -t opea/lvm:latest --build-arg https_proxy=$https_proxy 
 docker build --no-cache -t opea/dataprep-multimodal-redis:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/dataprep/multimodal/redis/langchain/Dockerfile .
 ```
 
-### 5. Build asr images
+### 5. Build Whisper Server Image
 
 Build whisper server image
 
@@ -268,7 +272,7 @@ curl http://${host_ip}:${REDIS_RETRIEVER_PORT}/v1/multimodal_retrieval \
     -d "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 ```
 
-4. asr
+4. whisper
 
 ```bash
 curl ${WHISPER_SERVER_ENDPOINT} \

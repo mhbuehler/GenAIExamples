@@ -114,7 +114,7 @@ docker build --no-cache -t opea/lvm:latest --build-arg https_proxy=$https_proxy 
 docker build --no-cache -t opea/dataprep-multimodal-redis:latest --build-arg https_proxy=$https_proxy --build-arg http_proxy=$http_proxy -f comps/dataprep/multimodal/redis/langchain/Dockerfile .
 ```
 
-### 5. Build asr images
+### 5. Build Whisper Server Image
 
 Build whisper server image
 
@@ -218,7 +218,7 @@ curl http://${host_ip}:7000/v1/multimodal_retrieval \
     -d "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 ```
 
-4. asr
+4. whisper
 
 ```bash
 curl ${WHISPER_SERVER_ENDPOINT} \
