@@ -172,10 +172,16 @@ docker compose -f compose.yaml up -d
 
 ## MultimodalQnA Demo on Gaudi2
 
-![MultimodalQnA-upload-waiting-screenshot](./assets/img/upload-gen-trans.png)
+![MultimodalQnA-ui-screenshot](./assets/img/mmqna-ui.png)
 
-![MultimodalQnA-upload-done-screenshot](./assets/img/mmqna-ui.png)
+![MultimodalQnA-ingest-video-screenshot](./assets/img/video-ingestion.png)
 
-![MultimodalQnA-query-example-screenshot](./assets/img/example_query.png)
+![MultimodalQnA-video-query-screenshot](./assets/img/video-query.png)
+
+![MultimodalQnA-audio-ingestion-screenshot](./assets/img/audio-ingestion.png)
+
+![MultimodalQnA-audio-query-screenshot](./assets/img/audio-query.png)
 
 ![MultimodalQnA-upload-pdf-screenshot](./assets/img/ingest_pdf.png)
+
+![MultimodalQnA-pdf-query-example-screenshot](./assets/img/pdf-query.png)
