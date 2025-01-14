@@ -46,7 +46,7 @@ function build_docker_images() {
     cd $WORKPATH/docker_image_build
     git clone https://github.com/mhbuehler/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"mmqna-image-query"}" && cd ../
     echo "Build all the images with --no-cache, check docker_image_build.log for details..."
-    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding retriever-redis lvm-llava lvm dataprep-multimodal-redis asr whisper"
+    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding retriever-redis lvm-llava lvm dataprep-multimodal-redis whisper"
     docker compose -f build.yaml build ${service_list} --no-cache > ${LOG_PATH}/docker_image_build.log
 
     docker images && sleep 1m
@@ -61,8 +61,6 @@ function setup_env() {
     export WHISPER_PORT=7066
     export MAX_IMAGES=1
     export WHISPER_MODEL="base"
-    export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
-    export ASR_PORT=9099
     export ASR_SERVICE_PORT=3001
     export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
     export REDIS_DB_PORT=6379
