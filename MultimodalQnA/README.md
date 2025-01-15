@@ -172,16 +172,23 @@ docker compose -f compose.yaml up -d
 
 ## MultimodalQnA Demo on Gaudi2
 
+### Multimodal QnA UI
 ![MultimodalQnA-ui-screenshot](./assets/img/mmqna-ui.png)
 
+### Video Ingestion
 ![MultimodalQnA-ingest-video-screenshot](./assets/img/video-ingestion.png)
 
+### Text Query following the ingestion of a Video
 ![MultimodalQnA-video-query-screenshot](./assets/img/video-query.png)
 
+### Audio Ingestion
 ![MultimodalQnA-audio-ingestion-screenshot](./assets/img/audio-ingestion.png)
 
+### Text Query following the ingestion of an Audio Podcast
 ![MultimodalQnA-audio-query-screenshot](./assets/img/audio-query.png)
 
+### PDF Ingestion
 ![MultimodalQnA-upload-pdf-screenshot](./assets/img/ingest_pdf.png)
 
+### Text query following the ingestion of a PDF
 ![MultimodalQnA-pdf-query-example-screenshot](./assets/img/pdf-query.png)
