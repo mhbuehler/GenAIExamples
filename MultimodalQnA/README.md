@@ -181,6 +181,12 @@ docker compose -f compose.yaml up -d
 ### Text Query following the ingestion of a Video
 ![MultimodalQnA-video-query-screenshot](./assets/img/video-query.png)
 
+### Image Ingestion
+![MultimodalQnA-ingest-image-screenshot](./assets/img/image-ingestion.png)
+
+### Text Query following the ingestion of an image
+![MultimodalQnA-video-query-screenshot](./assets/img/image-query.png)
+
 ### Audio Ingestion
 ![MultimodalQnA-audio-ingestion-screenshot](./assets/img/audio-ingestion.png)
 
