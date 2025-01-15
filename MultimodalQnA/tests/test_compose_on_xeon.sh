@@ -61,6 +61,7 @@ function setup_env() {
     export WHISPER_PORT=7066
     export MAX_IMAGES=1
     export WHISPER_MODEL="base"
+    export WHISPER_SERVER_ENDPOINT="http://${host_ip}:${WHISPER_PORT}/v1/asr"
     export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
     export ASR_PORT=9099
     export ASR_SERVICE_PORT=3001
