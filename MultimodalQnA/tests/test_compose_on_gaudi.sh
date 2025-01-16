@@ -69,6 +69,7 @@ function setup_env() {
     export WHISPER_PORT=7066
     export MAX_IMAGES=1
     export WHISPER_MODEL="base"
+    export WHISPER_SERVER_ENDPOINT="http://${host_ip}:${WHISPER_PORT}/v1/asr"
     export ASR_SERVICE_PORT=3001
     export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
     export DATAPREP_MMR_PORT=6007
@@ -80,7 +81,7 @@ function setup_env() {
     export EMM_BRIDGETOWER_PORT=6006
     export BRIDGE_TOWER_EMBEDDING=true
     export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
-    export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMM_BRIDGETOWER_PORT/v1/encode"
+    export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMM_BRIDGETOWER_PORT"
     export MM_EMBEDDING_PORT_MICROSERVICE=6000
     export REDIS_RETRIEVER_PORT=7000
     export LVM_PORT=9399
@@ -249,7 +250,7 @@ function validate_microservices() {
         "{\"text\":\"test\",\"embedding\":${your_embedding}}"
 
     echo "Wait for tgi-llava-gaudi-server service to be ready"
-    check_service_ready "tgi-llava-gaudi-server" 10 "Connected"
+    check_service_ready "tgi-llava-gaudi-server" 20 "Connected"
 
     # llava server
     echo "Evaluating LLAVA tgi-gaudi"
