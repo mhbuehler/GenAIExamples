@@ -46,7 +46,7 @@ function build_docker_images() {
     cd $WORKPATH/docker_image_build
     git clone https://github.com/opea-project/GenAIComps.git && cd GenAIComps && git checkout "${opea_branch:-"main"}" && cd ../
     echo "Build all the images with --no-cache, check docker_image_build.log for details..."
-    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding retriever-redis lvm-llava lvm dataprep-multimodal-redis asr whisper"
+    service_list="multimodalqna multimodalqna-ui embedding-multimodal-bridgetower embedding retriever lvm-llava lvm dataprep-multimodal-redis whisper"
     docker compose -f build.yaml build ${service_list} --no-cache > ${LOG_PATH}/docker_image_build.log
 
     docker images && sleep 1m
@@ -61,10 +61,7 @@ function setup_env() {
     export WHISPER_PORT=7066
     export MAX_IMAGES=1
     export WHISPER_MODEL="base"
-    export ASR_ENDPOINT=http://$host_ip:$WHISPER_PORT
-    export ASR_PORT=9099
-    export ASR_SERVICE_PORT=3001
-    export ASR_SERVICE_ENDPOINT="http://${host_ip}:${ASR_SERVICE_PORT}/v1/audio/transcriptions"
+    export WHISPER_SERVER_ENDPOINT="http://${host_ip}:${WHISPER_PORT}/v1/asr"
     export REDIS_DB_PORT=6379
     export REDIS_INSIGHTS_PORT=8001
     export REDIS_URL="redis://${host_ip}:${REDIS_DB_PORT}"
@@ -79,7 +76,7 @@ function setup_env() {
     export EMM_BRIDGETOWER_PORT=6006
     export BRIDGE_TOWER_EMBEDDING=true
     export EMBEDDING_MODEL_ID="BridgeTower/bridgetower-large-itm-mlm-itc"
-    export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMM_BRIDGETOWER_PORT/v1/encode"
+    export MMEI_EMBEDDING_ENDPOINT="http://${host_ip}:$EMM_BRIDGETOWER_PORT"
     export MM_EMBEDDING_PORT_MICROSERVICE=6000
     export REDIS_RETRIEVER_PORT=7000
     export LVM_PORT=9399

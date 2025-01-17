@@ -48,8 +48,8 @@ class Conversation:
             # Need to do RAG. If the query is text, prompt is the query only
             if self.audio_query_file:
                 ret = [{"role": "user", "content": [{"type": "audio", "audio": self.get_b64_audio_query()}]}]
-            elif len(messages) in self.image_query_files:
-                b64_image = get_b64_frame_from_timestamp(self.image_query_files[len(messages)], 0)
+            elif 0 in self.image_query_files:
+                b64_image = get_b64_frame_from_timestamp(self.image_query_files[0], 0)
                 ret = [
                     {
                         "role": "user",
@@ -68,12 +68,11 @@ class Conversation:
                 for i, (role, message) in enumerate(messages):
                     if message:
                         dic = {"role": role}
-                        # The main message will be either audio or text
+                        content = [{"type": "text", "text": message}]
+                        # There might be audio
                         if self.audio_query_file:
-                            content = [{"type": "audio", "audio": self.get_b64_audio_query()}]
-                        else:
-                            content = [{"type": "text", "text": message}]
-                        # There might be a returned image/video from the first query
+                            content.append({"type": "audio", "audio": self.get_b64_audio_query()})
+                        # There might be a returned item from the first query
                         if i == 0 and self.time_of_frame_ms and self.video_file:
                             base64_frame = (
                                 self.base64_frame
@@ -87,13 +86,11 @@ class Conversation:
                                 content[0]["text"] = content[0]["text"] + " " + self._template_caption()
                             content.append({"type": "image_url", "image_url": {"url": base64_frame}})
                         # There might be a query image
-                        if i + 2 in self.image_query_files:
+                        if i in self.image_query_files:
                             content.append(
                                 {
                                     "type": "image_url",
-                                    "image_url": {
-                                        "url": get_b64_frame_from_timestamp(self.image_query_files[i + 2], 0)
-                                    },
+                                    "image_url": {"url": get_b64_frame_from_timestamp(self.image_query_files[i], 0)},
                                 }
                             )
                         dic["content"] = content
