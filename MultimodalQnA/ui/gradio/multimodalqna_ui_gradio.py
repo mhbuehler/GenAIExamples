@@ -444,7 +444,7 @@ def get_files():
             return
         else:
             yield (
-                gr.HTML("Vector store is empty!", visible=True)
+                gr.HTML("Vector store is empty.", visible=True)
             )
             return
     except Exception as e:
