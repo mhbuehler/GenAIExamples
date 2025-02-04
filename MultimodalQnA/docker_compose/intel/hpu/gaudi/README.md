@@ -278,6 +278,9 @@ echo "This is an apple."  > ${caption_fn}
 
 export audio_fn="AudioSample.wav"
 wget https://github.com/intel/intel-extension-for-transformers/raw/main/intel_extension_for_transformers/neural_chat/assets/audio/sample.wav -O ${audio_fn}
+
+export audio_mp3_fn="sample_audio.mp3"
+wget wget https://audio-samples.github.io/samples/mp3/blizzard_biased/sample-0.mp3 -O ${audio_mp3_fn}
 ```
 
 Test dataprep microservice with generating transcript. This command updates a knowledge base by uploading a local video .mp4 and an audio .wav file.
@@ -288,7 +291,8 @@ curl --silent --write-out "HTTPSTATUS:%{http_code}" \
     -H 'Content-Type: multipart/form-data' \
     -X POST \
     -F "files=@./${video_fn}" \
-    -F "files=@./${audio_fn}"
+    -F "files=@./${audio_fn}" \
+    -F "files=@./${audio_mp3_fn}"
 ```
 
 Also, test dataprep microservice with generating an image caption using lvm
