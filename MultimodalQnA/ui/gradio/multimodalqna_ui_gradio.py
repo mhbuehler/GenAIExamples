@@ -435,11 +435,17 @@ def get_files():
         response = requests.post(dataprep_get_file_addr, headers=headers)
         logger.info(response.status_code)
         files = response.json()
-        html_content = "<ul>" + "".join(f"<li>{item}</li>" for item in files) + "</ul>"
-        yield (
-            gr.HTML(html_content, visible=True, max_height=200)
-        )
-        return
+        if files:
+            html_content = "<ul>" + "".join(f"<li>{item}</li>" for item in files) + "</ul>"
+            yield (
+                gr.HTML(html_content, visible=True, max_height=200)
+            )
+            return
+        else:
+            yield (
+                gr.HTML("Vector store is empty!", visible=True)
+            )
+            return
     except Exception as e:
         logger.info(f"Error getting files from vector store: {str(e)}")
         
