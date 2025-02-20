@@ -16,7 +16,7 @@ ip_address=$(hostname -I | awk '{print $1}')
 
 export image_fn="sample.png"
 export video_fn="WeAreGoingOnBullrun.mp4"
-export audio_fn="sample.mp3"
+export audio_fn="sample.mp3"  # audio_fn and caption_fn are used as captions for image_fn, so they all need the same base name
 export caption_fn="sample.txt"
 export pdf_fn="nke-10k-2023.pdf"
 
