@@ -169,7 +169,7 @@ To set up environment variables for deploying MultimodalQnA services, follow the
 
    # Append the host_ip to the no_proxy list to allow container communication
    # Example: no_proxy="localhost, 127.0.0.1, 192.168.1.1"
-   export no_proxy="${no_proxy},${host_ip}
+   export no_proxy="${no_proxy},${host_ip}"
    ```
 
 2. If you are in a proxy environment, also set the proxy-related environment variables:

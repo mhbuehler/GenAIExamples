@@ -8,7 +8,7 @@ Since the `compose.yaml` will consume some environment variables, you need to se
 
 **Export the value of the public IP address of your Gaudi server to the `host_ip` environment variable**
 
-> Change the External_Public_IP below with the actual IPV4 value
+> Change the External_Public_IP below with the actual IPV4 value when setting the `host_ip` value (do not use localhost).
 
 ```
 export host_ip="External_Public_IP"
@@ -56,8 +56,6 @@ export BACKEND_SERVICE_ENDPOINT="http://${host_ip}:${MEGA_SERVICE_PORT}/v1/multi
 export UI_PORT=5173
 export UI_TIMEOUT=200
 ```
-
-Note: Please replace with `host_ip` with you external IP address, do not use localhost.
 
 > Note: The `MAX_IMAGES` environment variable is used to specify the maximum number of images that will be sent from the LVM service to the LLaVA server.
 > If an image list longer than `MAX_IMAGES` is sent to the LVM server, a shortened image list will be sent to the LLaVA service. If the image list
