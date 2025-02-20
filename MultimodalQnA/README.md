@@ -137,7 +137,7 @@ You can choose other LVM models, such as `llava-hf/llava-1.5-7b-hf ` and `llava-
 The MultimodalQnA service can be effortlessly deployed on either Intel Gaudi2 or Intel XEON Scalable Processors.
 
 Currently we support deploying MultimodalQnA services with docker compose. The [`docker_compose`](docker_compose)
-directory has folders which include the `compose.yaml` files for different hardware types:
+directory has folders which include `compose.yaml` files for different hardware types:
 
 ```
 📂 docker_compose
@@ -181,7 +181,7 @@ To set up environment variables for deploying MultimodalQnA services, follow the
 
 3. Set up other environment variables:
 
-   > Choose **one** command below to set up env vars according to your hardware. Otherwise, the port numbers may be set incorrectly.
+   > Choose **one** command below to set env vars according to your hardware. Otherwise, the port numbers may be set incorrectly.
 
    ```bash
    # on Gaudi
