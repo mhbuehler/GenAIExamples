@@ -16,6 +16,9 @@ from fastapi.staticfiles import StaticFiles
 from gradio_pdf import PDF
 from utils import build_logger, make_temp_image, server_error_msg, split_video
 
+IMAGE_FORMATS = ['.png', '.gif', '.jpg', '.jpeg']
+AUDIO_FORMATS = ['.wav', '.mp3']
+
 logger = build_logger("gradio_web_server", "gradio_web_server.log")
 logflag = os.getenv("LOGFLAG", False)
 
@@ -166,7 +169,7 @@ def http_bot(state, request: gr.Request):
                         print(f"video {state.video_file} does not exist in UI host!")
                         splited_video_path = None
                     state.split_video = splited_video_path
-                elif file_ext in [".jpg", ".jpeg", ".png", ".gif"]:
+                elif file_ext in IMAGE_FORMATS:
                     try:
                         output_image_path = make_temp_image(state.video_file, file_ext)
                     except:
@@ -546,6 +549,12 @@ with gr.Blocks() as upload_image:
                 gr.Audio(visible=True, type="filepath", label=audio_caption_label)
             )
 
+    def verify_audio_caption_type(file, request: gr.Request):
+        audio_type = os.path.splitext(file)[-1]
+        if audio_type not in AUDIO_FORMATS:
+            raise Exception("The audio file format must be .wav or .mp3")
+        return file
+
     with gr.Row():
         with gr.Column(scale=6):
             image_upload_cap = gr.Image(type="filepath", sources="upload", elem_id="image_upload_cap", visible=True)
@@ -564,6 +573,7 @@ with gr.Blocks() as upload_image:
             custom_caption = gr.Textbox(visible=False, interactive=True, label=text_caption_label)
             custom_caption_audio = gr.Audio(visible=False, type="filepath", label=audio_caption_label)
             text_upload_result = gr.Textbox(visible=False, interactive=False, label="Upload Status")
+        custom_caption_audio.input(verify_audio_caption_type, [custom_caption_audio], [custom_caption_audio])
         image_upload_cap.upload(
             ingest_gen_caption, [image_upload_cap, gr.Textbox(value="image", visible=False)], [text_upload_result]
         )
