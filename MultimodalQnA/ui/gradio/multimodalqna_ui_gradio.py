@@ -525,7 +525,7 @@ with gr.Blocks() as upload_image:
     gr.Markdown("Use this interface to ingest an image and generate a caption for it. If uploading a caption, populate it before the image.")
 
     text_caption_label = "Text Caption"
-    audio_caption_label = "Voice Audio Caption"
+    audio_caption_label = "Voice Audio Caption ({}, or microphone)".format(", ".join(AUDIO_FORMATS))
     def select_upload_type(choice, request: gr.Request):
         if choice == "gen_caption":
             return (
@@ -552,7 +552,7 @@ with gr.Blocks() as upload_image:
     def verify_audio_caption_type(file, request: gr.Request):
         audio_type = os.path.splitext(file)[-1]
         if audio_type not in AUDIO_FORMATS:
-            raise Exception("The audio file format must be .wav or .mp3")
+            raise Exception('The audio file format must be {}'.format(" or ".join(AUDIO_FORMATS)))
         return file
 
     with gr.Row():
