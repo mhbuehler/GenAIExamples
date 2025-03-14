@@ -552,8 +552,18 @@ with gr.Blocks() as upload_image:
     def verify_audio_caption_type(file, request: gr.Request):
         audio_type = os.path.splitext(file)[-1]
         if audio_type not in AUDIO_FORMATS:
-            raise Exception('The audio file format must be {}'.format(" or ".join(AUDIO_FORMATS)))
-        return file
+            return (
+                None,
+                gr.Textbox(
+                    visible=True,
+                    value="The audio file format must be {}".format(" or ".join(AUDIO_FORMATS))
+                )
+            )
+        else:
+            return (
+                gr.Audio(value=file, visible=True, type="filepath", label=audio_caption_label),
+                gr.Textbox(visible=False, value=None)
+            )
 
     with gr.Row():
         with gr.Column(scale=6):
@@ -573,7 +583,7 @@ with gr.Blocks() as upload_image:
             custom_caption = gr.Textbox(visible=False, interactive=True, label=text_caption_label)
             custom_caption_audio = gr.Audio(visible=False, type="filepath", label=audio_caption_label)
             text_upload_result = gr.Textbox(visible=False, interactive=False, label="Upload Status")
-        custom_caption_audio.input(verify_audio_caption_type, [custom_caption_audio], [custom_caption_audio])
+        custom_caption_audio.input(verify_audio_caption_type, [custom_caption_audio], [custom_caption_audio, text_upload_result])
         image_upload_cap.upload(
             ingest_gen_caption, [image_upload_cap, gr.Textbox(value="image", visible=False)], [text_upload_result]
         )
