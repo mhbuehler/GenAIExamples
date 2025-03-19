@@ -212,9 +212,10 @@ def convert_audio_to_base64(audio_path):
     encoded_string = base64.b64encode(open(audio_path, "rb").read())
     return encoded_string.decode("utf-8")
 
+
 def convert_base64_to_audio(b64_str):
     """Decodes the base64 encoded audio data and returns a saved filepath."""
-    
+
     audio_data = base64.b64decode(b64_str)
 
     # Create a temporary file
