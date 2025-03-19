@@ -7,8 +7,10 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Dict, List, Any, Literal
 
-from utils import convert_audio_to_base64, get_b64_frame_from_timestamp, GRADIO_IMAGE_FORMATS, GRADIO_AUDIO_FORMATS
+from utils import convert_audio_to_base64, get_b64_frame_from_timestamp
 
+IMAGE_FORMATS = ['.png', '.gif', '.jpg', '.jpeg']
+AUDIO_FORMATS = ['.wav', '.mp3']
 
 class SeparatorStyle(Enum):
     """Different separator style."""
@@ -70,10 +72,10 @@ class Conversation:
                 conv_dict[-1]['content'].append({'type': 'text', 'text': content})
             
             if isinstance(content, dict) and 'path' in content:
-                if Path(content['path']).suffix in GRADIO_IMAGE_FORMATS:
+                if Path(content['path']).suffix in IMAGE_FORMATS:
                     is_image_query = True
                     conv_dict[-1]['content'].append({'type': 'image_url', 'image_url': {'url': get_b64_frame_from_timestamp(content['path'], 0)}})
-                if Path(content['path']).suffix in GRADIO_AUDIO_FORMATS:
+                if Path(content['path']).suffix in AUDIO_FORMATS:
                     conv_dict[-1]['content'].append({'type': 'audio', 'audio': convert_audio_to_base64(content['path'])})
             
             # include the image from the assistant's response given the user's is not a image query
