@@ -18,10 +18,9 @@ from gradio_pdf import PDF
 from utils import (
     build_logger,
     convert_base64_to_audio,
-    GRADIO_AUDIO_FORMATS,
-    GRADIO_IMAGE_FORMATS,
     make_temp_image,
     server_error_msg,
+    split_audio,
     split_video,
     TMP_DIR
 )
@@ -49,6 +48,7 @@ app = FastAPI()
 cur_dir = os.getcwd()
 static_dir = Path(os.path.join(cur_dir, "static/"))
 tmp_dir = Path(os.path.join(cur_dir, "split_tmp_videos/"))
+tmp_dir2 = Path(os.path.join(cur_dir, "split_tmp_audios/"))
 
 Path(static_dir).mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -62,6 +62,8 @@ disable_btn = gr.Button(interactive=False)
 
 def clear_history(state, request: gr.Request):
     logger.info(f"clear_history. ip: {request.client.host}")
+    if state.split_audio and os.path.exists(state.split_audio):
+        os.remove(state.split_audio)
     if state.split_video and os.path.exists(state.split_video):
         os.remove(state.split_video)
     if state.image and os.path.exists(state.image):
@@ -73,9 +75,10 @@ def clear_history(state, request: gr.Request):
     for file in glob.glob(os.path.join(TMP_DIR, "*.wav")):
         os.remove(file)  # This removes all chatbot assistant's voice response files
     video = gr.Video(value=None, elem_id="video", visible=True, label="Media")
+    audio = gr.Audio(value=None, elem_id="audio", visible=False, label="Media")
     image = gr.Image(value=None, elem_id="image", visible=False, label="Media")
     pdf = PDF(value=None, elem_id="pdf", interactive=False, visible=False, label="Media")
-    return (state, state.to_gradio_chatbot(), None, video, image, pdf) + (disable_btn,) * 1
+    return (state, state.to_gradio_chatbot(), None, video, audio, image, pdf) + (disable_btn,) * 1
 
 
 def add_text(state, multimodal_textbox, request: gr.Request):
@@ -95,9 +98,9 @@ def add_text(state, multimodal_textbox, request: gr.Request):
     state.skip_next = False
     
     if files:
-        if Path(files[0]).suffix in GRADIO_IMAGE_FORMATS:
+        if Path(files[0]).suffix in IMAGE_FORMATS:
             image_file = files[0]
-        if Path(files[0]).suffix in GRADIO_AUDIO_FORMATS or len(files) > 1:
+        if Path(files[0]).suffix in AUDIO_FORMATS or len(files) > 1:
             audio_file = files[-1]  # Guaranteed that last file would be recorded audio
     
     # Add to chatbot history
@@ -135,7 +138,7 @@ def http_bot(state, audio_response_toggler, request: gr.Request):
     
     if state.skip_next:
         # This generate call is skipped due to invalid inputs
-        yield (state, state.to_gradio_chatbot(), None, None, None) + (no_change_btn,) * 1
+        yield (state, state.to_gradio_chatbot(), None, None, None, None) + (no_change_btn,) * 1
         return
     
     is_very_first_query = all(True if h['role'] == 'user' else False for h in state.chatbot_history)
@@ -156,7 +159,7 @@ def http_bot(state, audio_response_toggler, request: gr.Request):
         "content": "▌"
     })
     
-    yield (state, state.to_gradio_chatbot(), state.split_video, state.image, state.pdf) + (disable_btn,) * 1
+    yield (state, state.to_gradio_chatbot(), state.split_video, state.split_audio, state.image, state.pdf) + (disable_btn,) * 1
     
     if logflag:
         logger.info(f"==== request ====\n{pload}")
@@ -205,6 +208,15 @@ def http_bot(state, audio_response_toggler, request: gr.Request):
                         print(f"video {state.video_file} does not exist in UI host!")
                         splited_video_path = None
                     state.split_video = splited_video_path
+                elif file_ext in AUDIO_FORMATS:
+                    try:
+                        splited_audio_path = split_audio(
+                            state.video_file, state.time_of_frame_ms, tmp_dir2, f"{state.time_of_frame_ms}__{video_file}"
+                        )
+                    except:
+                        print(f"audio {state.video_file} does not exist in UI host!")
+                        splited_audio_path = None
+                    state.split_audio = splited_audio_path
                 elif file_ext in IMAGE_FORMATS:
                     try:
                         output_image_path = make_temp_image(state.video_file, file_ext)
@@ -228,7 +240,7 @@ def http_bot(state, audio_response_toggler, request: gr.Request):
         
         gr.Error("Request exception occurred. See logs for details.")
         
-        yield (state, state.to_gradio_chatbot(), None, None, None) + (enable_btn,)
+        yield (state, state.to_gradio_chatbot(), None, None, None, None) + (enable_btn,)
         return
     
     if audio_response:
@@ -240,6 +252,7 @@ def http_bot(state, audio_response_toggler, request: gr.Request):
         state,
         state.to_gradio_chatbot(),
         gr.Video(state.split_video, visible=state.split_video is not None),
+        gr.Audio(state.split_audio, visible=state.split_audio is not None),
         gr.Image(state.image, visible=state.image is not None),
         PDF(state.pdf, visible=state.pdf is not None, interactive=False, starting_page=int(state.time_of_frame_ms) if state.time_of_frame_ms else 0),
     ) + (enable_btn,) * 1
@@ -677,6 +690,7 @@ with gr.Blocks() as qna:
     with gr.Row(equal_height=True):
         with gr.Column(scale=2):
             video = gr.Video(elem_id="video", visible=True, label="Media")
+            audio = gr.Audio(elem_id="audio", visible=False, label="Meida")
             image = gr.Image(elem_id="image", visible=False, label="Media")
             pdf = PDF(elem_id="pdf", interactive=False, visible=False, label="Media")
         with gr.Column(scale=9):
@@ -685,7 +699,7 @@ with gr.Blocks() as qna:
                 with gr.Column(scale=8):
                     multimodal_textbox = gr.MultimodalTextbox(
                         show_label=False,
-                        file_types=GRADIO_IMAGE_FORMATS + GRADIO_AUDIO_FORMATS,
+                        file_types=IMAGE_FORMATS + AUDIO_FORMATS,
                         sources=["microphone", "upload"],
                         placeholder="Text, Image & Audio Query"
                     )
@@ -700,7 +714,7 @@ with gr.Blocks() as qna:
         [
             state,
         ],
-        [state, chatbot, multimodal_textbox, video, image, pdf, clear_btn],
+        [state, chatbot, multimodal_textbox, video, audio, image, pdf, clear_btn],
     )
 
     multimodal_textbox.submit(
@@ -710,7 +724,7 @@ with gr.Blocks() as qna:
     ).then(
         http_bot,
         [state, audio_response_toggler],
-        [state, chatbot, video, image, pdf, clear_btn]
+        [state, chatbot, video, audio, image, pdf, clear_btn]
     ).then(
         lambda: gr.MultimodalTextbox(interactive=True),
         None,

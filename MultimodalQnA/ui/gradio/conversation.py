@@ -31,6 +31,7 @@ class Conversation:
     time_of_frame_ms: str = None
     base64_frame: str = None
     skip_next: bool = False
+    split_audio: str = None
     split_video: str = None
     image: str = None
     audio_query_file: str = None
@@ -122,6 +123,7 @@ class Conversation:
             "video_file": self.video_file,
             "caption": self.caption,
             "base64_frame": self.base64_frame,
+            "split_audio": self.split_audio,
             "split_video": self.split_video,
             "image": self.image,
             "audio_query_file": self.audio_query_file,
@@ -140,6 +142,7 @@ multimodalqna_conv = Conversation(
     caption=None,
     time_of_frame_ms=None,
     base64_frame=None,
+    split_audio=None,
     split_video=None,
     image=None,
     audio_query_file=None,
