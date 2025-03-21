@@ -48,7 +48,7 @@ app = FastAPI()
 cur_dir = os.getcwd()
 static_dir = Path(os.path.join(cur_dir, "static/"))
 tmp_dir = Path(os.path.join(cur_dir, "split_tmp_videos/"))
-tmp_dir2 = Path(os.path.join(cur_dir, "split_tmp_audios/"))
+audio_tmp_dir = Path(os.path.join(cur_dir, "split_tmp_audios/"))
 
 Path(static_dir).mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -192,7 +192,7 @@ def http_bot(state, audio_response_toggler, request: gr.Request):
                 elif file_ext in AUDIO_FORMATS:
                     try:
                         splited_audio_path = split_audio(
-                            state.video_file, state.time_of_frame_ms, tmp_dir2, f"{state.time_of_frame_ms}__{video_file}"
+                            state.video_file, state.time_of_frame_ms, audio_tmp_dir, f"{state.time_of_frame_ms}__{video_file}"
                         )
                     except:
                         print(f"audio {state.video_file} does not exist in UI host!")
