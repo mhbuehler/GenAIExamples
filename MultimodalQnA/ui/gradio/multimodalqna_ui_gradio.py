@@ -16,8 +16,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from gradio_pdf import PDF
 from utils import (
-    GRADIO_AUDIO_FORMATS,
-    GRADIO_IMAGE_FORMATS,
+    AUDIO_FORMATS,
+    IMAGE_FORMATS,
     TMP_DIR,
     build_logger,
     convert_base64_to_audio,
@@ -27,8 +27,6 @@ from utils import (
     split_video,
 )
 
-IMAGE_FORMATS = [".png", ".gif", ".jpg", ".jpeg"]
-AUDIO_FORMATS = [".wav", ".mp3"]
 
 logger = build_logger("gradio_web_server", "gradio_web_server.log")
 logflag = os.getenv("LOGFLAG", False)
@@ -674,7 +672,7 @@ with gr.Blocks() as qna:
     state = gr.State(multimodalqna_conv.copy())
     with gr.Row(equal_height=True):
         with gr.Column(scale=2):
-            audio = gr.Audio(elem_id="audio", visible=False, label="Meida")
+            audio = gr.Audio(elem_id="audio", visible=False, label="Media")
             video = gr.Video(elem_id="video", visible=True, label="Media")
             image = gr.Image(elem_id="image", visible=False, label="Media")
             pdf = PDF(elem_id="pdf", interactive=False, visible=False, label="Media")
