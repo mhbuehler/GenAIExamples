@@ -42,7 +42,9 @@ USER user
 # Stage 4: unique part
 FROM comps-base
 
+#ARG BASE_TAG=latest
+#FROM opea/comps-base:$BASE_TAG
+
 COPY ./multimodalqna.py $HOME/multimodalqna.py
 
 ENTRYPOINT ["python", "multimodalqna.py"]
-# ENTRYPOINT ["/usr/bin/sleep", "infinity"]
